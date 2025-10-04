@@ -4,6 +4,7 @@ import AuroraCanvas from "./components/AuroraCanvas"
 import SearchBar from "./components/SearchBar.tsx"
 import Clock from "./components/Clock"
 import QuickLinks from "./components/QuickLinks.tsx"
+import WeatherWidget from "./components/WeatherWidget.tsx"
 import {
   InputGroup,
   InputGroupAddon,
@@ -29,6 +30,8 @@ export default function App() {
       <nav className="absolute bottom-10 inset-x-0 flex justify-center gap-10 animate-fade-in">
         <QuickLinks />
       </nav>
+
+      <WeatherWidget />
     </main>
   )
 }

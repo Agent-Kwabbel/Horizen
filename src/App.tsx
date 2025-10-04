@@ -17,7 +17,7 @@ export default function App() {
       <AuroraCanvas />
 
       <div className="absolute inset-0 grid place-items-center px-4">
-        <div className="w-full max-w-md pointer-events-auto">
+        <div className="w-full max-w-lg lg:max-w-2xl pointer-events-auto animate-fade-in">
           <SearchBar placeholder="Search DuckDuckGo..." />
         </div>
       </div>    

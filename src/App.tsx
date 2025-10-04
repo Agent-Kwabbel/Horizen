@@ -3,6 +3,7 @@ import { useState } from "react"
 import AuroraCanvas from "./components/AuroraCanvas"
 import SearchBar from "./components/SearchBar.tsx"
 import Clock from "./components/Clock"
+import QuickLinks from "./components/QuickLinks.tsx"
 import {
   InputGroup,
   InputGroupAddon,
@@ -24,6 +25,10 @@ export default function App() {
           <SearchBar placeholder="Search DuckDuckGo..." />
         </div>
       </div>    
+
+      <nav className="absolute bottom-10 inset-x-0 flex justify-center gap-10 animate-fade-in">
+        <QuickLinks />
+      </nav>
     </main>
   )
 }

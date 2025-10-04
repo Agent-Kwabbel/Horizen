@@ -1,31 +1,33 @@
-import { Youtube, MessageCircle, Mail, HardDrive } from "lucide-react"
+import { Youtube, MessageCircle, Mail, HardDrive, Github, Globe } from "lucide-react"
+import type { QuickLinks } from "@/lib/prefs"
 
-const links = [
-  { href: "https://youtube.com", label: "YouTube", icon: Youtube },
-  { href: "https://chat.openai.com", label: "ChatGPT", icon: MessageCircle },
-  { href: "https://mail.proton.me", label: "Proton Mail", icon: Mail },
-  { href: "https://drive.google.com", label: "Google Drive", icon: HardDrive },
-]
+const ICONS = {
+  youtube: Youtube,
+  chat: MessageCircle,
+  mail: Mail,
+  drive: HardDrive,
+  github: Github,
+  globe: Globe,
+}
 
-export default function QuickLinks() {
+export default function QuickLinks({ links }: { links: QuickLink[] }) {
   return (
     <nav className="absolute bottom-10 inset-x-0 flex justify-center gap-10">
-      {links.map(({ href, label, icon: Icon }) => (
-        <a
-          key={label}
-          href={href}
-          rel="noopener noreferrer"
-          className="
-            text-white/60 hover:text-white
-            transition-colors duration-200
-            flex flex-col items-center gap-1
-          "
-        >
-          <Icon className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.6} />
-          <span className="text-xs sm:text-sm font-medium opacity-70">{label}</span>
-        </a>
-      ))}
+      {links.map(({ id, label, href, icon }) => {
+        const Icon = ICONS[icon] ?? Globe
+        return (
+          <a
+            key={id}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/60 hover:text-white transition-colors duration-200 flex flex-col items-center gap-1"
+          >
+            <Icon className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.6} />
+            <span className="text-xs sm:text-sm font-medium opacity-70">{label}</span>
+          </a>
+        )
+      })}
     </nav>
   )
 }
-

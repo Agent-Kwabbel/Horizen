@@ -151,7 +151,7 @@ export default function WeatherWidget() {
 
   return (
     <div className="absolute top-4 right-4 z-10 pointer-events-auto">
-      <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem]">
+      <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] py-3">
         <CardContent className="p-3">
   <div className="flex items-start justify-between gap-2">
     <div className="min-w-0">

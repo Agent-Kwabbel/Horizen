@@ -2,6 +2,7 @@ import { useState } from "react"
 
 import AuroraCanvas from "./components/AuroraCanvas"
 import SearchBar from "./components/SearchBar.tsx"
+import Clock from "./components/Clock"
 import {
   InputGroup,
   InputGroupAddon,
@@ -17,7 +18,9 @@ export default function App() {
       <AuroraCanvas />
 
       <div className="absolute inset-0 grid place-items-center px-4">
-        <div className="w-full max-w-lg lg:max-w-2xl pointer-events-auto animate-fade-in">
+        <div className="w-full max-w-xl pointer-events-auto animate-fade-in flex flex-col items-stretch gap-6">
+          <Clock />
+
           <SearchBar placeholder="Search DuckDuckGo..." />
         </div>
       </div>    

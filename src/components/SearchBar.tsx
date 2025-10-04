@@ -1,4 +1,5 @@
-import { useEffect, useRef, FormEvent } from "react"
+import { useEffect, useRef } from "react"
+import type { FormEvent } from "react"
 import { Search } from "lucide-react"
 import {
   InputGroup,

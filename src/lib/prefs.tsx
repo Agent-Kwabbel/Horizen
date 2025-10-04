@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useMemo, useState, useEffect } from "react"
+import type { ReactNode } from "react"
 
 export type IconKey = "youtube" | "chat" | "mail" | "drive" | "github" | "globe"
 export type QuickLink = { id: string; label: string; href: string; icon: IconKey }

@@ -9,7 +9,6 @@ import {
   SheetTitle,
   SheetFooter,
   SheetTrigger,
-  // SheetOverlay, // uncomment if you added it to shadcn
 } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -56,9 +55,6 @@ export default function SettingsFab() {
           </Button>
         </SheetTrigger>
 
-        {/* If you generated SheetOverlay in shadcn, you can enable it */}
-        {/* <SheetOverlay className="bg-black/60 backdrop-blur-sm" /> */}
-
         <SheetContent
           side="right"
           className="w-[92vw] sm:w-[480px] max-w-[520px] bg-black/85 text-white border-white/10 backdrop-blur p-5"
@@ -68,7 +64,6 @@ export default function SettingsFab() {
           </SheetHeader>
 
           <div className="space-y-6">
-            {/* Weather toggle */}
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="weather">Show weather</Label>
@@ -81,7 +76,6 @@ export default function SettingsFab() {
               />
             </div>
 
-            {/* Quick links editor */}
             <div>
               <Label>Quick links</Label>
               <div className="text-xs text-white/60 mb-2">Name, URL, and icon.</div>

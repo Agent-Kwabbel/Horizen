@@ -1,5 +1,3 @@
-import { useState } from "react"
-
 import AuroraCanvas from "./components/AuroraCanvas"
 import SearchBar from "./components/SearchBar.tsx"
 import Clock from "./components/Clock"
@@ -7,12 +5,6 @@ import QuickLinks from "./components/QuickLinks.tsx"
 import WeatherWidget from "./components/WeatherWidget.tsx"
 import SettingsFab from "./components/SettingsFab.tsx"
 import { PrefsProvider, usePrefs } from "@/lib/prefs"
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group"
-import { Search } from "lucide-react"
 
 function AppBody() {
   const { prefs } = usePrefs()

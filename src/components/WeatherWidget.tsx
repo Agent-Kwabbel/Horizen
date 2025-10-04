@@ -91,20 +91,18 @@ function wxGlyph(code: number, isDay: 0 | 1) {
 export default function WeatherWidget() {
   const [coords, setCoords] = useState<Coords | null>(() => loadLoc())
   const [wx, setWx] = useState<CurrentWx | null>(null)
-  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState("")
   const [results, setResults] = useState<GeoResult[] | null>(null)
 
+  // Fetch current weather (with cache)
   useEffect(() => {
     const run = async () => {
       if (!coords) return
-      setLoading(true)
       const key = wxKey(coords.lat, coords.lon)
       const cached = getCache(key)
       if (cached) {
         setWx(cached)
-        setLoading(false)
         return
       }
       const data = await fetchCurrent(coords.lat, coords.lon).catch(() => null)
@@ -112,18 +110,20 @@ export default function WeatherWidget() {
         setWx(data)
         setCache(key, data)
       }
-      setLoading(false)
     }
     run()
   }, [coords])
 
+  // Manual search (simple debounce via min length)
   useEffect(() => {
     if (q.length < 2) {
       setResults(null)
       return
     }
     let active = true
-    searchPlaces(q).then((r) => active && setResults(r)).catch(() => [])
+    searchPlaces(q)
+      .then((r) => active && setResults(r))
+      .catch(() => void 0)
     return () => {
       active = false
     }
@@ -144,7 +144,7 @@ export default function WeatherWidget() {
     if (!coords) return
     const key = wxKey(coords.lat, coords.lon)
     localStorage.removeItem(key)
-    setCoords({ ...coords })
+    setCoords({ ...coords }) // retriggers effect to refetch
   }
 
   const title = coords ? coords.name : "Select location"
@@ -153,97 +153,97 @@ export default function WeatherWidget() {
     <div className="absolute top-4 right-4 z-10 pointer-events-auto">
       <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] py-3">
         <CardContent className="p-3">
-  <div className="flex items-start justify-between gap-2">
-    <div className="min-w-0">
-      <div className="text-sm text-white/70 truncate" title={title}>
-        {title}
-      </div>
-
-      {wx && coords ? (
-        <div className="mt-1 flex items-center gap-2">
-          <div className="text-3xl leading-none mr-2">{wxGlyph(wx.weather_code, wx.is_day)}</div>
-
-          <div className="leading-tight">
-            <div className="flex items-baseline gap-2">
-              <div className="text-2xl sm:text-[1.6rem] font-semibold tabular-nums">
-                {Math.round(wx.temperature_2m)}°C
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm text-white/70 truncate" title={title}>
+                {title}
               </div>
-              <div className="text-sm text-white/70 whitespace-nowrap tabular-nums">
-                Feels&nbsp;{Math.round(wx.apparent_temperature)}°C
-              </div>
-            </div>
 
-            <div className="mt-1 text-xs text-white/70 tabular-nums">
-              {Math.round(wx.wind_speed_10m)} km/h wind · {wx.relative_humidity_2m} % rain
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 mt-1">
-          <Skeleton className="h-8 w-8 rounded-full bg-white/10" />
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-28 bg-white/10" />
-            <Skeleton className="h-3 w-36 bg-white/10" />
-          </div>
-        </div>
-      )}
-    </div>
+              {wx && coords ? (
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="text-3xl leading-none mr-2">{wxGlyph(wx.weather_code, wx.is_day)}</div>
 
-    <div className="flex flex-col items-end gap-2 shrink-0">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-        title="Refresh"
-        onClick={refresh}
-        disabled={!coords}
-      >
-        <RefreshCw className="w-4 h-4" />
-      </Button>
-
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-            title="Change location"
-          >
-            <MapPin className="w-4 h-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-3 bg-black/80 backdrop-blur border-white/10 text-white">
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search city…"
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/50 mb-2"
-            autoFocus
-          />
-          <div className="max-h-64 overflow-auto space-y-1">
-            {results?.length
-              ? results.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => pick(r)}
-                    className="w-full text-left px-2 py-1.5 rounded hover:bg-white/10"
-                  >
-                    <div className="text-sm">{r.name}</div>
-                    <div className="text-xs text-white/60">
-                      {[r.admin1, r.country].filter(Boolean).join(", ")}
+                  <div className="leading-tight">
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-2xl sm:text-[1.6rem] font-semibold tabular-nums">
+                        {Math.round(wx.temperature_2m)}°C
+                      </div>
+                      <div className="text-sm text-white/70 whitespace-nowrap tabular-nums">
+                        Feels&nbsp;{Math.round(wx.apparent_temperature)}°C
+                      </div>
                     </div>
-                  </button>
-                ))
-              : q.length >= 2
-                ? <div className="text-xs text-white/60 px-1 py-2">No results</div>
-                : <div className="text-xs text-white/60 px-1 py-2">Type at least 2 characters…</div>
-            }
+
+                    <div className="mt-1 text-xs text-white/70 tabular-nums">
+                      💨 {Math.round(wx.wind_speed_10m)} km/h · 💧 {wx.relative_humidity_2m}%
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <Skeleton className="h-8 w-8 rounded-full bg-white/10" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-28 bg-white/10" />
+                    <Skeleton className="h-3 w-36 bg-white/10" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                title="Refresh"
+                onClick={refresh}
+                disabled={!coords}
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
+                    title="Change location"
+                  >
+                    <MapPin className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-3 bg-black/80 backdrop-blur border-white/10 text-white">
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search city…"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/50 mb-2"
+                    autoFocus
+                  />
+                  <div className="max-h-64 overflow-auto space-y-1">
+                    {results?.length
+                      ? results.map((r) => (
+                          <button
+                            key={r.id}
+                            onClick={() => pick(r)}
+                            className="w-full text-left px-2 py-1.5 rounded hover:bg-white/10"
+                          >
+                            <div className="text-sm">{r.name}</div>
+                            <div className="text-xs text-white/60">
+                              {[r.admin1, r.country].filter(Boolean).join(", ")}
+                            </div>
+                          </button>
+                        ))
+                      : q.length >= 2
+                        ? <div className="text-xs text-white/60 px-1 py-2">No results</div>
+                        : <div className="text-xs text-white/60 px-1 py-2">Type at least 2 characters…</div>
+                    }
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  </div>
-</CardContent>
+        </CardContent>
       </Card>
     </div>
   )

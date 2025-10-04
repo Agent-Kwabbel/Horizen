@@ -1,73 +1,22 @@
-# React + TypeScript + Vite
+# Horizen
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Horizen is a minimal start page that combines a beautiful ambient backdrop with quick access to search, links, and local weather. I needed a new tab page that would match my Linux setup and my browser (Zen Browser), so I made one!
 
-Currently, two official plugins are available:
+## Features
+- **Animated aurora back** that fills the screen with softly shifting colors. There is a 5% on a hidden real aurora theme on page load.
+- **Keyboard-first DuckDuckGo search** with instant focus on load and `/` shortcut support.
+- **Quick links dock** for your most-used destinations, powered by editable preferences stored in local storage.
+- **Weather at a glance** with cached results, location search, and manual refresh built on the Open-Meteo API.
+- **Persistent preferences provider** that syncs across tabs so updates stay in place on every reload.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Getting Started
+1. Install dependencies: `yarn install`
+2. Run the development server: `yarn dev`
+3. Build for production: `yarn build`
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Roadmap
+Planned improvements for future releases include:
+- Using Und*ck to make DuckDuckGo Bang operations faster.
+- Allowing users to switch their preferred search engine without code changes.
+- And you know, general performance optimizations across the app.
+- Maybe some extra shortcuts and more customization/widgets?

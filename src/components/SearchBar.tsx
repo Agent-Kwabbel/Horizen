@@ -33,6 +33,7 @@ export default function SearchBar({
           name="q"
           placeholder={placeholder}
           aria-label="Search"
+          autoFocus
           className="text-white placeholder:text-white/50 px-5"
         />
         <InputGroupAddon>

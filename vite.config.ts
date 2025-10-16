@@ -11,4 +11,28 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split KaTeX into separate chunk (includes 63 font files)
+          'katex': ['katex'],
+          // Split markdown processing libraries
+          'markdown': [
+            'react-markdown',
+            'rehype-katex',
+            'remark-math',
+            'remark-gfm',
+            'rehype-raw'
+          ],
+          // Split syntax highlighting
+          'syntax-highlighter': ['react-syntax-highlighter'],
+          // Split React vendor code
+          'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
+        },
+      },
+    },
+    // Increase chunk size warning limit since we're splitting intentionally
+    chunkSizeWarningLimit: 1000,
+  },
 })

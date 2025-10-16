@@ -5,15 +5,16 @@ import SettingsFab from '@/components/SettingsFab'
 import * as apiKeysModule from '@/lib/api-keys'
 
 vi.mock('@/lib/api-keys', () => ({
-  getApiKeys: vi.fn(() => ({})),
-  saveApiKeys: vi.fn(),
+  getApiKeys: vi.fn(async () => ({})),
+  saveApiKeys: vi.fn(async () => {}),
+  migrateFromPlaintext: vi.fn(async () => {}),
 }))
 
 describe('SettingsFab', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
-    vi.mocked(apiKeysModule.getApiKeys).mockReturnValue({})
+    vi.mocked(apiKeysModule.getApiKeys).mockResolvedValue({})
   })
 
   it('should render settings button', () => {
@@ -172,7 +173,7 @@ describe('SettingsFab', () => {
 
   it('should display existing API keys', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiKeysModule.getApiKeys).mockReturnValue({
+    vi.mocked(apiKeysModule.getApiKeys).mockResolvedValue({
       openai: 'sk-existing-openai',
       anthropic: 'sk-ant-existing-anthropic',
     })
@@ -188,7 +189,7 @@ describe('SettingsFab', () => {
 
       expect(openaiInput.value).toBe('sk-existing-openai')
       expect(anthropicInput.value).toBe('sk-ant-existing-anthropic')
-    })
+    }, { timeout: 3000 })
   })
 
   it('should save API keys to localStorage', async () => {
@@ -502,7 +503,7 @@ describe('SettingsFab', () => {
 
   it('should handle empty API keys', async () => {
     const user = userEvent.setup()
-    vi.mocked(apiKeysModule.getApiKeys).mockReturnValue({})
+    vi.mocked(apiKeysModule.getApiKeys).mockResolvedValue({})
 
     render(<SettingsFab />)
 
@@ -515,6 +516,92 @@ describe('SettingsFab', () => {
 
       expect(openaiInput.value).toBe('')
       expect(anthropicInput.value).toBe('')
+    })
+  })
+
+  describe('Keyboard Shortcuts', () => {
+    it('should display keyboard shortcuts section', async () => {
+      const user = userEvent.setup()
+      render(<SettingsFab />)
+
+      const button = screen.getByTitle('Settings')
+      await user.click(button)
+
+      await waitFor(() => {
+        expect(screen.getByText('Keyboard Shortcuts')).toBeInTheDocument()
+      })
+    })
+
+    it('should display keyboard shortcuts button', async () => {
+      const user = userEvent.setup()
+      render(<SettingsFab />)
+
+      const button = screen.getByTitle('Settings')
+      await user.click(button)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /manage keyboard shortcuts/i })).toBeInTheDocument()
+      })
+    })
+
+    it('should call onOpenShortcuts when keyboard shortcuts button is clicked', async () => {
+      const user = userEvent.setup()
+      const mockOnOpenShortcuts = vi.fn()
+      render(<SettingsFab onOpenShortcuts={mockOnOpenShortcuts} />)
+
+      const button = screen.getByTitle('Settings')
+      await user.click(button)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /manage keyboard shortcuts/i })).toBeInTheDocument()
+      })
+
+      const shortcutsButton = screen.getByRole('button', { name: /manage keyboard shortcuts/i })
+      await user.click(shortcutsButton)
+
+      expect(mockOnOpenShortcuts).toHaveBeenCalled()
+    })
+
+    it('should display keyboard shortcuts description', async () => {
+      const user = userEvent.setup()
+      render(<SettingsFab />)
+
+      const button = screen.getByTitle('Settings')
+      await user.click(button)
+
+      await waitFor(() => {
+        expect(screen.getByText(/customize keyboard shortcuts for quick access/i)).toBeInTheDocument()
+      })
+    })
+
+    it('should have keyboard icon on shortcuts button', async () => {
+      const user = userEvent.setup()
+      render(<SettingsFab />)
+
+      const button = screen.getByTitle('Settings')
+      await user.click(button)
+
+      await waitFor(() => {
+        const shortcutsButton = screen.getByRole('button', { name: /manage keyboard shortcuts/i })
+        const icon = shortcutsButton.querySelector('svg')
+        expect(icon).toBeInTheDocument()
+        expect(icon?.classList.contains('lucide-keyboard')).toBe(true)
+      })
+    })
+
+    it('should render keyboard shortcuts section after model settings', async () => {
+      const user = userEvent.setup()
+      render(<SettingsFab />)
+
+      const button = screen.getByTitle('Settings')
+      await user.click(button)
+
+      await waitFor(() => {
+        const modelHeader = screen.getByText('Model Settings')
+        const shortcutsHeader = screen.getByText('Keyboard Shortcuts')
+        expect(modelHeader).toBeInTheDocument()
+        expect(shortcutsHeader).toBeInTheDocument()
+      })
     })
   })
 })

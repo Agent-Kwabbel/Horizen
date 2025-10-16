@@ -1,7 +1,7 @@
 import { useId, useState, useEffect } from "react"
 import { usePrefs } from "@/lib/prefs"
 import type { QuickLink, IconKey } from "@/lib/prefs"
-import { getApiKeys, saveApiKeys } from "@/lib/api-keys"
+import { getApiKeys, saveApiKeys, migrateFromPlaintext } from "@/lib/api-keys"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -26,7 +26,8 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, Settings, Eye, EyeOff } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Plus, Trash2, Settings, Eye, EyeOff, HelpCircle, Keyboard } from "lucide-react"
 
 const ICON_CHOICES: { key: IconKey; label: string }[] = [
   { key: "youtube", label: "YouTube" },
@@ -37,16 +38,46 @@ const ICON_CHOICES: { key: IconKey; label: string }[] = [
   { key: "globe", label: "Globe" },
 ]
 
-export default function SettingsFab() {
+type SettingsFabProps = {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  onOpenShortcuts?: () => void
+}
+
+export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: SettingsFabProps = {}) {
   const { prefs, setPrefs } = usePrefs()
   const newId = useId()
 
-  const [apiKeys, setApiKeys] = useState(() => getApiKeys())
+  const [apiKeys, setApiKeys] = useState<{ openai?: string; anthropic?: string }>({})
   const [showOpenAIKey, setShowOpenAIKey] = useState(false)
   const [showAnthropicKey, setShowAnthropicKey] = useState(false)
 
+  // Load API keys on mount and migrate from plaintext if needed
   useEffect(() => {
-    saveApiKeys(apiKeys)
+    let mounted = true
+    ;(async () => {
+      await migrateFromPlaintext()
+      const keys = await getApiKeys()
+      if (mounted) {
+        setApiKeys(keys)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  // Save API keys when they change
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      if (mounted) {
+        await saveApiKeys(apiKeys)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
   }, [apiKeys])
 
   const updateLink = (id: string, patch: Partial<QuickLink>) =>
@@ -63,7 +94,7 @@ export default function SettingsFab() {
 
   return (
     <div className="absolute bottom-4 right-4 z-50">
-      <Sheet>
+      <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
@@ -79,6 +110,7 @@ export default function SettingsFab() {
           side="right"
           className="w-[92vw] sm:w-[480px] max-w-[520px] bg-black/85 text-white border-white/10 backdrop-blur p-0 flex flex-col"
         >
+          <TooltipProvider>
           <SheetHeader className="mb-2 px-5 pt-5 shrink-0">
             <SheetTitle>Settings</SheetTitle>
           </SheetHeader>
@@ -133,10 +165,27 @@ export default function SettingsFab() {
 
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="openai-key" className="text-xs font-normal text-white/80">
-                    OpenAI API Key
-                  </Label>
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Label htmlFor="openai-key" className="text-xs font-normal text-white/80">
+                      OpenAI API Key
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="text-white/50 hover:text-white/80 transition-colors">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[280px]">
+                        <p className="font-semibold mb-1">Get your OpenAI API key:</p>
+                        <p>1. Visit platform.openai.com</p>
+                        <p>2. Sign in or create account</p>
+                        <p>3. Go to API keys section</p>
+                        <p>4. Create new secret key</p>
+                        <p className="mt-1 text-white/70">Required for GPT models. Keys start with "sk-"</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="flex gap-2">
                     <Input
                       id="openai-key"
                       type={showOpenAIKey ? "text" : "password"}
@@ -161,10 +210,27 @@ export default function SettingsFab() {
                 </div>
 
                 <div>
-                  <Label htmlFor="anthropic-key" className="text-xs font-normal text-white/80">
-                    Anthropic API Key
-                  </Label>
-                  <div className="flex gap-2 mt-1">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Label htmlFor="anthropic-key" className="text-xs font-normal text-white/80">
+                      Anthropic API Key
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="text-white/50 hover:text-white/80 transition-colors">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[280px]">
+                        <p className="font-semibold mb-1">Get your Anthropic API key:</p>
+                        <p>1. Visit console.anthropic.com</p>
+                        <p>2. Sign in or create account</p>
+                        <p>3. Go to API keys section</p>
+                        <p>4. Create new API key</p>
+                        <p className="mt-1 text-white/70">Required for Claude models. Keys start with "sk-ant-"</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="flex gap-2">
                     <Input
                       id="anthropic-key"
                       type={showAnthropicKey ? "text" : "password"}
@@ -197,10 +263,27 @@ export default function SettingsFab() {
               </div>
 
               <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="verified-org" className="font-normal">
-                    Show verified org models
-                  </Label>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1">
+                    <Label htmlFor="verified-org" className="font-normal">
+                      Show verified org models
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="text-white/50 hover:text-white/80 transition-colors">
+                          <HelpCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[300px]">
+                        <p className="font-semibold mb-1">Verified Organization Models</p>
+                        <p className="mb-2">Enables GPT-5 and GPT-5 Mini models in the chat interface.</p>
+                        <p className="font-semibold mb-1">Requirements:</p>
+                        <p>• Verified OpenAI organization account</p>
+                        <p>• Access granted by OpenAI</p>
+                        <p className="mt-2 text-white/70">Only enable if you have verified org access, otherwise API calls will fail.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <p className="text-xs text-white/60">
                     Display GPT-5 and GPT-5 Mini (requires verified OpenAI organization)
                   </p>
@@ -211,6 +294,23 @@ export default function SettingsFab() {
                   onCheckedChange={(v) => setPrefs({ ...prefs, showVerifiedOrgModels: v })}
                 />
               </div>
+            </div>
+
+            <div>
+              <div className="mb-3">
+                <h4 className="text-sm font-medium">Keyboard Shortcuts</h4>
+                <p className="text-xs text-white/60 mt-1">
+                  Customize keyboard shortcuts for quick access.
+                </p>
+              </div>
+
+              <Button
+                onClick={onOpenShortcuts}
+                className="w-full bg-white/10 hover:bg-white/20 text-white"
+              >
+                <Keyboard className="w-4 h-4 mr-2" />
+                Manage Keyboard Shortcuts
+              </Button>
             </div>
 
             <div>
@@ -324,12 +424,31 @@ export default function SettingsFab() {
                 <Plus className="w-4 h-4 mr-2" /> Add link
               </Button>
             </div>
+
+            <div>
+              <div className="mb-3">
+                <h3 className="text-lg font-semibold">About Horizen</h3>
+              </div>
+
+              <div className="bg-white/5 rounded-lg p-4 space-y-2 text-sm text-white/80">
+                <p>
+                  Horizen is a privacy-first AI chat interface built as a browser start page with DuckDuckGo search, customizable quick links, and weather.
+                </p>
+                <p>
+                  <strong className="text-white/90">Data Storage:</strong> All data is stored locally in your browser using localStorage. Your API keys are encrypted with AES-GCM 256-bit encryption before storage. Chat conversations, preferences, and encrypted keys persist across browser restarts but are permanently deleted when you clear browser data.
+                </p>
+                <p>
+                  <strong className="text-white/90">Privacy:</strong> No data is sent to any servers except your chosen AI providers (OpenAI or Anthropic) when you send chat messages. Weather data is fetched from Open-Meteo's free API. Search queries go directly to DuckDuckGo.
+                </p>
+              </div>
+            </div>
             </div>
           </div>
 
           <SheetFooter className="text-xs text-white/50 px-5 pb-5 shrink-0">
             Changes are saved automatically.
           </SheetFooter>
+          </TooltipProvider>
         </SheetContent>
       </Sheet>
     </div>

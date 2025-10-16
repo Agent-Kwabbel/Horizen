@@ -5,8 +5,9 @@ Horizen is a minimal start page that combines a beautiful ambient backdrop with 
 Btw, altough I use a Firefox based browser (Zen Browser), gradients on Chormium based browsers are for some reason waaay better. So the background is 10x better if you use Chromium.
 
 ## Features
-- **Animated aurora back** that fills the screen with softly shifting colors. There is a 5% on a hidden real aurora theme on page load.
+- **Animated aurora background** that fills the screen with softly shifting colors. There is a 5% chance of a hidden real aurora theme on page load.
 - **Keyboard-first DuckDuckGo search** with instant focus on load and `/` shortcut support.
+- **Customizable keyboard shortcuts** for quick access to search, chat, settings, and more. Fully customizable via the shortcuts manager.
 - **Quick links dock** for your most-used destinations, powered by editable preferences stored in local storage.
 - **Weather at a glance** with cached results, location search, and manual refresh built on the Open-Meteo API.
 - **AI Chat Assistant** with support for OpenAI (GPT-4o, GPT-4 Turbo, etc.) and Anthropic (Claude) models. Manage multiple conversations with rename and delete capabilities.
@@ -68,10 +69,23 @@ To use the AI chat feature, you need to configure API keys in the app settings:
 
 Keys are stored locally in your browser and sent through the proxy server.
 
+## Keyboard Shortcuts
+
+Default keyboard shortcuts (all customizable in Settings):
+
+- **Ctrl+K** / **⌘K** - Toggle chat sidebar
+- **Ctrl+Shift+N** / **⌘⇧N** - Create new chat
+- **Ctrl+I** / **⌘I** - Focus chat input
+- **Ctrl+U** / **⌘U** - Upload file to chat
+- **Ctrl+,** / **⌘,** - Open settings
+- **Ctrl+/** / **⌘/** - Open keyboard shortcuts manager
+- **Ctrl+W** / **⌘W** - Toggle weather widget
+- **/** - Focus search bar
+- **Esc** - Close dialogs / unfocus elements
+
 ## Roadmap
 Planned improvements for future releases include:
 - Using Und*ck to make DuckDuckGo Bang operations faster.
 - Allowing users to switch their preferred search engine without code changes.
 - Add more available quick link icons.
 - And you know, general performance optimizations across the app.
-- Maybe some extra shortcuts and more customization/widgets?

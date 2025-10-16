@@ -193,7 +193,7 @@ export async function* sendChatMessage(
   messages: ChatMessage[],
   chatModel: ChatModel
 ): AsyncGenerator<StreamChunk> {
-  const keys = getApiKeys()
+  const keys = await getApiKeys()
 
   if (chatModel.provider === "openai") {
     if (!keys.openai) {

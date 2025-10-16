@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, useEffect } from "react"
+import { createContext, useContext, useMemo, useState, useEffect, useRef } from "react"
 import type { ReactNode } from "react"
 
 export type IconKey = "youtube" | "chat" | "mail" | "drive" | "github" | "globe"
@@ -70,10 +70,34 @@ const PrefsContext = createContext<Ctx | null>(null)
 
 export function PrefsProvider({ children }: { children: ReactNode }) {
   const [prefs, setPrefs] = useState<Prefs>(() => loadInitial())
+  const saveTimeoutRef = useRef<number | null>(null)
 
-  // Persist whenever prefs change
+  // Debounced persist to prevent localStorage write storms during streaming
   useEffect(() => {
-    try { localStorage.setItem(LS, JSON.stringify(prefs)) } catch {}
+    // Clear any pending save
+    if (saveTimeoutRef.current !== null) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Schedule save after 500ms of inactivity
+    saveTimeoutRef.current = window.setTimeout(() => {
+      try {
+        localStorage.setItem(LS, JSON.stringify(prefs))
+      } catch (err) {
+        console.error('Failed to save preferences:', err)
+      }
+      saveTimeoutRef.current = null
+    }, 500)
+
+    // Ensure final state is saved on unmount
+    return () => {
+      if (saveTimeoutRef.current !== null) {
+        clearTimeout(saveTimeoutRef.current)
+        try {
+          localStorage.setItem(LS, JSON.stringify(prefs))
+        } catch {}
+      }
+    }
   }, [prefs])
 
   // (Optional) sync across tabs

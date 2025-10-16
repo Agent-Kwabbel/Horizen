@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 import type { FormEvent } from "react"
 import { Search } from "lucide-react"
 import {
@@ -13,11 +13,22 @@ type Props = {
   newTab?: boolean
 }
 
-export default function SearchBar({
+export type SearchBarRef = {
+  focus: () => void
+}
+
+const SearchBar = forwardRef<SearchBarRef, Props>(({
   placeholder = "Search DuckDuckGo...",
   newTab = false,
-}: Props) {
+}, ref) => {
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Expose focus method to parent
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current?.focus()
+    },
+  }))
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -30,19 +41,6 @@ export default function SearchBar({
 
   useEffect(() => {
     inputRef.current?.focus()
-
-    const handleKey = (e: KeyboardEvent) => {
-      const isTyping =
-        document.activeElement &&
-        ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)
-      if (e.key === "/" && !isTyping) {
-        e.preventDefault()
-        inputRef.current?.focus()
-      }
-    }
-
-    window.addEventListener("keydown", handleKey)
-    return () => window.removeEventListener("keydown", handleKey)
   }, [])
 
   return (
@@ -68,4 +66,8 @@ export default function SearchBar({
       </InputGroup>
     </form>
   )
-}
+})
+
+SearchBar.displayName = "SearchBar"
+
+export default SearchBar

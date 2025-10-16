@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react"
 import { createPortal } from "react-dom"
 import { usePrefs } from "@/lib/prefs"
 import type { ChatMessage, ChatConversation, ChatModel, OpenAIModel, AnthropicModel } from "@/lib/prefs"
@@ -31,9 +31,15 @@ const ANTHROPIC_MODELS = [
   { key: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku" },
 ] as const
 
+export type ChatSidebarRef = {
+  focusInput: () => void
+  triggerFileUpload: () => void
+  selectConversation: (id: string) => void
+}
+
 type Props = { open: boolean; onOpenChange: (open: boolean) => void }
 
-export default function ChatSidebar({ open, onOpenChange }: Props) {
+const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, ref) => {
   const { prefs, setPrefs } = usePrefs()
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [inputMessage, setInputMessage] = useState("")
@@ -50,6 +56,19 @@ export default function ChatSidebar({ open, onOpenChange }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const editFileInputRef = useRef<HTMLInputElement>(null)
+
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    focusInput: () => {
+      inputRef.current?.focus()
+    },
+    triggerFileUpload: () => {
+      fileInputRef.current?.click()
+    },
+    selectConversation: (id: string) => {
+      setCurrentConversationId(id)
+    },
+  }))
 
   const currentConversation = prefs.conversations.find((c) => c.id === currentConversationId)
 
@@ -888,7 +907,7 @@ export default function ChatSidebar({ open, onOpenChange }: Props) {
                           ) : (
                             <>
                               <div
-                                className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                                className={`rounded-lg px-4 py-2 max-w-[80%] overflow-x-auto ${
                                   msg.role === "user" ? "bg-blue-600/80 text-white" : "bg-white/10 text-white/90"
                                 }`}
                               >
@@ -1165,4 +1184,8 @@ export default function ChatSidebar({ open, onOpenChange }: Props) {
       )}
     </>
   )
-}
+})
+
+ChatSidebar.displayName = "ChatSidebar"
+
+export default ChatSidebar

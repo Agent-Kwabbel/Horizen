@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '@/App'
 
+// Mock lazy-loaded components with proper default export
 vi.mock('@/components/ChatSidebar', () => ({
   default: ({ open, onOpenChange }: any) => (
     <div data-testid="chat-sidebar" data-open={open}>
@@ -20,8 +21,9 @@ vi.mock('@/components/ChatFab', () => ({
 }))
 
 vi.mock('@/lib/api-keys', () => ({
-  getApiKeys: vi.fn(() => ({})),
-  saveApiKeys: vi.fn(),
+  getApiKeys: vi.fn(async () => ({})),
+  saveApiKeys: vi.fn(async () => {}),
+  migrateFromPlaintext: vi.fn(async () => {}),
 }))
 
 describe('App Integration Tests', () => {
@@ -146,31 +148,41 @@ describe('App Integration Tests', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    // Wait for lazy-loaded chat components to be available
+    await waitFor(() => {
+      expect(screen.getByTestId('chat-fab')).toBeInTheDocument()
+    })
+
     await user.keyboard('{Control>}k{/Control}')
 
     await waitFor(() => {
       const sidebar = screen.getByTestId('chat-sidebar')
       expect(sidebar).toHaveAttribute('data-open', 'true')
-    })
+    }, { timeout: 3000 })
 
     await user.keyboard('{Control>}k{/Control}')
 
     await waitFor(() => {
       const sidebar = screen.getByTestId('chat-sidebar')
       expect(sidebar).toHaveAttribute('data-open', 'false')
-    })
+    }, { timeout: 3000 })
   })
 
   it('should toggle chat sidebar with Cmd+K on Mac', async () => {
     const user = userEvent.setup()
     render(<App />)
 
+    // Wait for lazy-loaded chat components to be available
+    await waitFor(() => {
+      expect(screen.getByTestId('chat-fab')).toBeInTheDocument()
+    })
+
     await user.keyboard('{Meta>}k{/Meta}')
 
     await waitFor(() => {
       const sidebar = screen.getByTestId('chat-sidebar')
       expect(sidebar).toHaveAttribute('data-open', 'true')
-    })
+    }, { timeout: 3000 })
   })
 
   it('should prevent default behavior for Ctrl+K', async () => {

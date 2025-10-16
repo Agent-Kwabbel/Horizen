@@ -16,7 +16,7 @@ export default function MessageContent({ content }: MessageContentProps) {
     .replace(/\\\[(.*?)\\\]/gs, (_, math) => `$$${math}$$`)
 
   return (
-    <div className="text-sm max-w-none">
+    <div className="text-sm min-w-0">
       <ReactMarkdown
         remarkPlugins={[
           [remarkMath, {
@@ -40,23 +40,26 @@ export default function MessageContent({ content }: MessageContentProps) {
           const language = match ? match[1] : ''
 
           return !inline && language ? (
-            <SyntaxHighlighter
-              style={vscDarkPlus}
-              language={language}
-              PreTag="div"
-              className="rounded-md !bg-black/40 !mt-2 !mb-2"
-              customStyle={{
-                margin: 0,
-                padding: '1rem',
-                fontSize: '0.875rem',
-              }}
-              {...props}
-            >
-              {String(children).replace(/\n$/, '')}
-            </SyntaxHighlighter>
+            <div className="overflow-x-auto max-w-full">
+              <SyntaxHighlighter
+                style={vscDarkPlus}
+                language={language}
+                PreTag="div"
+                className="rounded-md !bg-black/40 !mt-2 !mb-2"
+                customStyle={{
+                  margin: 0,
+                  padding: '1rem',
+                  fontSize: '0.875rem',
+                }}
+                wrapLongLines={false}
+                {...props}
+              >
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
+            </div>
           ) : (
             <code
-              className="bg-white/10 px-1.5 py-0.5 rounded text-sm font-mono"
+              className="bg-white/10 px-1.5 py-0.5 rounded text-sm font-mono break-all"
               {...props}
             >
               {children}

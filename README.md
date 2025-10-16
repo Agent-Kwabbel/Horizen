@@ -52,6 +52,8 @@ Also, yes, AI chat sidebar now!
 
 ### Deployment
 
+**NOTE: NEED TO UPDATE THE DEPLOYMENT STEPS, RECENTLY CHANGED.**
+
 For deployment, you have two options:
 
 **Option A: Static Hosting (Without Chat Feature)**

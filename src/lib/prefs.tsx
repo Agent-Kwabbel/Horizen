@@ -3,18 +3,52 @@ import type { ReactNode } from "react"
 
 export type IconKey = "youtube" | "chat" | "mail" | "drive" | "github" | "globe"
 export type QuickLink = { id: string; label: string; href: string; icon: IconKey }
-export type Prefs = { showWeather: boolean; links: QuickLink[] }
+
+export type ModelProvider = "openai" | "anthropic"
+export type OpenAIModel = "gpt-5" | "gpt-5-mini" | "gpt-5-nano" | "gpt-4.1" | "gpt-4o" | "gpt-4o-mini"
+export type AnthropicModel = "claude-sonnet-4-5-20250929" | "claude-opus-4-1-20250805" | "claude-3-5-haiku-20241022"
+export type ChatModel = { provider: ModelProvider; model: OpenAIModel | AnthropicModel }
+
+export type ChatMessage = {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  timestamp: number
+  images?: string[] // base64 data URIs
+}
+
+export type ChatConversation = {
+  id: string
+  title: string
+  model: ChatModel
+  messages: ChatMessage[]
+  createdAt: number
+  updatedAt: number
+}
+
+export type Prefs = {
+  showWeather: boolean
+  showChat: boolean
+  showVerifiedOrgModels: boolean
+  links: QuickLink[]
+  chatModel: ChatModel
+  conversations: ChatConversation[]
+}
 
 const LS = "startpage:prefs"
 
 const DEFAULTS: Prefs = {
   showWeather: true,
+  showChat: true,
+  showVerifiedOrgModels: false,
   links: [
     { id: "1", label: "YouTube", href: "https://youtube.com", icon: "youtube" },
     { id: "2", label: "ChatGPT", href: "https://chat.openai.com", icon: "chat" },
     { id: "3", label: "Proton Mail", href: "https://mail.proton.me", icon: "mail" },
     { id: "4", label: "Drive", href: "https://drive.google.com", icon: "drive" },
   ],
+  chatModel: { provider: "openai", model: "gpt-4o" },
+  conversations: [],
 }
 
 function loadInitial(): Prefs {

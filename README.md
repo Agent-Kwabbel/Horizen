@@ -9,12 +9,64 @@ Btw, altough I use a Firefox based browser (Zen Browser), gradients on Chormium 
 - **Keyboard-first DuckDuckGo search** with instant focus on load and `/` shortcut support.
 - **Quick links dock** for your most-used destinations, powered by editable preferences stored in local storage.
 - **Weather at a glance** with cached results, location search, and manual refresh built on the Open-Meteo API.
+- **AI Chat Assistant** with support for OpenAI (GPT-4o, GPT-4 Turbo, etc.) and Anthropic (Claude) models. Manage multiple conversations with rename and delete capabilities.
 - **Persistent preferences provider** that syncs across tabs so updates stay in place on every reload.
 
 ## Getting Started
-1. Install dependencies: `yarn install`
-2. Run the development server: `yarn dev`
-3. Build for production: `yarn build`
+
+### Development
+
+1. **Install dependencies:**
+   ```bash
+   yarn install
+   ```
+
+2. **Run the development environment:**
+   ```bash
+   yarn dev
+   ```
+   This runs both the Vite dev server (port 5173) and the API proxy server (port 3001) concurrently.
+
+3. **Open in browser:**
+   Navigate to `http://localhost:5173`
+
+### Production Build
+
+1. **Build the app:**
+   ```bash
+   yarn build
+   ```
+   This will:
+   - Run TypeScript type checking
+   - Build optimized production files to `/dist`
+
+2. **Preview the production build locally:**
+   ```bash
+   yarn preview
+   ```
+
+### Deployment
+
+For deployment, you have two options:
+
+**Option A: Static Hosting (Without Chat Feature)**
+- Deploy the `/dist` folder to any static host (Netlify, Vercel, GitHub Pages, etc.)
+- The chat feature will not work without the proxy server
+
+**Option B: Full-Stack Deployment (With Chat Feature)**
+- Deploy both the static files AND the proxy server
+- Example with a Node.js hosting service:
+  1. Deploy `/dist` files
+  2. Run `node server.js` as a background process
+  3. Ensure the frontend can reach the proxy at the configured URL
+
+### API Keys
+
+To use the AI chat feature, you need to configure API keys in the app settings:
+- **OpenAI:** Get your key from https://platform.openai.com/api-keys
+- **Anthropic:** Get your key from https://console.anthropic.com/
+
+Keys are stored locally in your browser and sent through the proxy server.
 
 ## Roadmap
 Planned improvements for future releases include:

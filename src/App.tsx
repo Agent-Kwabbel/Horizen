@@ -1,13 +1,31 @@
+import { useState, useEffect } from "react"
 import AuroraCanvas from "./components/AuroraCanvas"
 import SearchBar from "./components/SearchBar.tsx"
 import Clock from "./components/Clock"
 import QuickLinks from "./components/QuickLinks.tsx"
 import WeatherWidget from "./components/WeatherWidget.tsx"
 import SettingsFab from "./components/SettingsFab.tsx"
+import ChatSidebar from "./components/ChatSidebar.tsx"
+import ChatFab from "./components/ChatFab.tsx"
+import { Toaster } from "./components/ui/sonner"
 import { PrefsProvider, usePrefs } from "@/lib/prefs"
 
 function AppBody() {
   const { prefs } = usePrefs()
+  const [chatOpen, setChatOpen] = useState(false)
+
+  // Keyboard shortcut: Ctrl+K to toggle chat
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault()
+        setChatOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
   return (
     <main className="relative min-h-svh">
       <AuroraCanvas />
@@ -24,7 +42,14 @@ function AppBody() {
       </nav>
 
       {prefs.showWeather && <WeatherWidget />}
+      {prefs.showChat && (
+        <>
+          <ChatFab onClick={() => setChatOpen(true)} />
+          <ChatSidebar open={chatOpen} onOpenChange={setChatOpen} />
+        </>
+      )}
       <SettingsFab />
+      <Toaster />
     </main>
   )
 }

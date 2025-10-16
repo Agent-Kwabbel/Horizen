@@ -4,6 +4,10 @@ Horizen is a minimal start page that combines a beautiful ambient backdrop with 
 
 Btw, altough I use a Firefox based browser (Zen Browser), gradients on Chormium based browsers are for some reason waaay better. So the background is 10x better if you use Chromium.
 
+Also, yes, AI chat sidebar now!
+
+*Little disclaimer, I've tested Claude Code for the first time on this, mainly for heling me out with things like Git (creating commit messages and branches nightmares), hosting on Vercel, and generating tests etc.*
+
 ## Features
 - **Animated aurora background** that fills the screen with softly shifting colors. There is a 5% chance of a hidden real aurora theme on page load.
 - **Keyboard-first DuckDuckGo search** with instant focus on load and `/` shortcut support.

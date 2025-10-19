@@ -2,7 +2,7 @@
 
 Horizen is a privacy-first browser start page combining powerful features: fast client side bang operators, AI chat supporting OpenAI, Anthropic, and Google Gemini, customizable quick links, and a local weather widget.
 
-*Note: Personally, use a Firefox-based browser (Zen Browser), but gradients render significantly better on Chromium-based browsers for optimal visual experience.*
+*Note: Personally, I use a Firefox-based browser (Zen Browser), but gradients render significantly better on Chromium-based browsers for optimal visual experience.*
 
 *Built with assistance from Claude Code mainly for Git workflows, Vercel deployment, test generation, and code refactoring, because I wanted to test it out.*
 

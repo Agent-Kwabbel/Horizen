@@ -11,7 +11,7 @@ type ChatMessageActionsProps = {
   copiedMessageId: string | null
   conversation: ChatConversation | undefined
   showVerifiedOrgModels: boolean
-  onEdit: () => void
+  onEdit: (messageId: string) => void
   onRetry: (messageId: string, modifier?: string, newModel?: ChatModel) => void
   onCopy: (messageId: string, content: string) => void
 }
@@ -33,7 +33,7 @@ export default function ChatMessageActions({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onEdit}
+          onClick={() => onEdit(messageId)}
           className="h-6 px-2 text-xs text-white/50 hover:text-white hover:bg-white/10"
           title="Edit message"
         >

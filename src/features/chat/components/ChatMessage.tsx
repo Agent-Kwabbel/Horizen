@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useRef, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Paperclip, Check, X, Loader2 } from "lucide-react"
@@ -16,7 +16,7 @@ type ChatMessageProps = {
   editingImages: string[]
   copiedMessageId: string | null
   showVerifiedOrgModels: boolean
-  onStartEditing: () => void
+  onStartEditing: (messageId: string) => void
   onCancelEditing: () => void
   onSaveEditing: () => void
   onEditingTextChange: (text: string) => void
@@ -27,7 +27,7 @@ type ChatMessageProps = {
   onCopy: (messageId: string, content: string) => void
 }
 
-export default function ChatMessage({
+const ChatMessage = memo(function ChatMessage({
   message,
   conversation,
   isLoading,
@@ -168,4 +168,6 @@ export default function ChatMessage({
       )}
     </div>
   )
-}
+})
+
+export default ChatMessage

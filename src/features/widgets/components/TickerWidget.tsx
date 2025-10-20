@@ -46,7 +46,7 @@ export default function TickerWidget({ config }: TickerWidgetProps) {
 
         <div className="space-y-0">
           {loading ? (
-            config.settings.symbols.map((symbol, i) => (
+            config.settings.symbols.map((_, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
                 <Skeleton className="h-4 w-16 bg-white/10" />
                 <div className="flex items-baseline gap-2">

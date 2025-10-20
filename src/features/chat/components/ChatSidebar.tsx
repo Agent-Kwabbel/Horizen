@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { ChatMessage as ChatMessageType, ChatConversation, ChatModel } from "@/lib/prefs"
-import { sendChatMessage } from "@/lib/chat-api"
+import type { ChatMessage as ChatMessageType, ChatModel } from "@/lib/prefs"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { MessageSquare } from "lucide-react"
-import { toast } from "sonner"
 import ChatHeader from "./ChatHeader"
 import ChatConversationList from "./ChatConversationList"
 import ChatMessage from "./ChatMessage"
 import ChatInput, { type ChatInputRef } from "./ChatInput"
 import ImageLightbox from "./ImageLightbox"
-import { resizeImage } from "./image-utils"
+import { useConversations } from "../hooks/useConversations"
+import { useImageAttachments } from "../hooks/useImageAttachments"
+import { useMessageEditing } from "../hooks/useMessageEditing"
+import { useChatStreaming } from "../hooks/useChatStreaming"
 
 export type ChatSidebarRef = {
   focusInput: () => void
@@ -24,21 +25,48 @@ type Props = { open: boolean; onOpenChange: (open: boolean) => void }
 
 const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, ref) => {
   const { prefs, setPrefs } = usePrefs()
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [inputMessage, setInputMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [streamingControllers, setStreamingControllers] = useState<Map<string, AbortController>>(new Map())
-  const [editingConvId, setEditingConvId] = useState<string | null>(null)
-  const [editingTitle, setEditingTitle] = useState("")
-  const [attachedImages, setAttachedImages] = useState<string[]>([])
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
-  const [editingMessageText, setEditingMessageText] = useState("")
-  const [editingMessageImages, setEditingMessageImages] = useState<string[]>([])
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const chatInputRef = useRef<ChatInputRef>(null)
+
+  const {
+    currentConversationId,
+    setCurrentConversationId,
+    currentConversation,
+    editingConvId,
+    editingTitle,
+    setEditingTitle,
+    createNewConversation,
+    deleteConversation,
+    updateConversationTitle,
+    startEditingTitle,
+    saveEditingTitle,
+    cancelEditingTitle,
+  } = useConversations()
+
+  const { attachedImages, handleImageUpload, handlePaste, removeImage, clearImages } = useImageAttachments()
+
+  const { isLoading, streamingControllers, stopStream, regenerateAssistantResponse, retryMessage } = useChatStreaming({
+    currentConversationId,
+  })
+
+  const {
+    editingMessageId,
+    editingMessageText,
+    editingMessageImages,
+    setEditingMessageText,
+    startEditingMessage,
+    cancelEditingMessage,
+    saveEditedMessage,
+    handleEditImageUpload,
+    removeEditImage,
+  } = useMessageEditing({
+    currentConversationId,
+    onRegenerateResponse: regenerateAssistantResponse,
+  })
 
   useImperativeHandle(ref, () => ({
     focusInput: () => {
@@ -54,8 +82,6 @@ const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, r
       toggleGhostMode()
     },
   }))
-
-  const currentConversation = prefs.conversations.find((c) => c.id === currentConversationId)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -111,111 +137,7 @@ const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, r
     if (open && !currentConversationId) {
       createNewConversation()
     }
-  }, [open, currentConversationId])
-
-  const createNewConversation = () => {
-    setPrefs((p) => ({
-      ...p,
-      conversations: p.conversations.filter((c) => c.messages.length > 0),
-    }))
-
-    const newConv: ChatConversation = {
-      id: `conv-${Date.now()}`,
-      title: "New Conversation",
-      model: prefs.chatModel,
-      messages: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
-    setPrefs((p) => ({ ...p, conversations: [newConv, ...p.conversations] }))
-    setCurrentConversationId(newConv.id)
-  }
-
-  const deleteConversation = (id: string) => {
-    setPrefs((p) => ({ ...p, conversations: p.conversations.filter((c) => c.id !== id) }))
-    if (currentConversationId === id) setCurrentConversationId(null)
-  }
-
-  const updateConversationTitle = (id: string, title: string) => {
-    setPrefs((p) => ({
-      ...p,
-      conversations: p.conversations.map((c) => (c.id === id ? { ...c, title } : c)),
-    }))
-  }
-
-  const startEditingTitle = (conv: ChatConversation) => {
-    setEditingConvId(conv.id)
-    setEditingTitle(conv.title)
-  }
-
-  const saveEditingTitle = () => {
-    if (editingConvId && editingTitle.trim()) updateConversationTitle(editingConvId, editingTitle.trim())
-    setEditingConvId(null)
-    setEditingTitle("")
-  }
-
-  const cancelEditingTitle = () => { setEditingConvId(null); setEditingTitle("") }
-
-  const handleImageUpload = async (files: FileList | null) => {
-    if (!files) return
-    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"))
-
-    const remainingSlots = 4 - attachedImages.length
-    if (remainingSlots <= 0) {
-      toast.error("Maximum images reached", {
-        description: "You can only attach up to 4 images per message.",
-      })
-      return
-    }
-
-    const filesToProcess = imageFiles.slice(0, remainingSlots)
-
-    for (const file of filesToProcess) {
-      try {
-        const resizedDataUrl = await resizeImage(file)
-        setAttachedImages((prev) => [...prev, resizedDataUrl])
-      } catch (error) {
-        console.error('Failed to process image:', error)
-        toast.error("Failed to process image", {
-          description: `Could not process ${file.name}. Please try another image.`,
-        })
-      }
-    }
-
-    if (imageFiles.length > remainingSlots) {
-      toast.warning("Some images not added", {
-        description: `Only added ${remainingSlots} image(s). Maximum 4 images total.`,
-      })
-    }
-  }
-
-  const handlePaste = async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items
-    if (!items) return
-
-    if (attachedImages.length >= 4) {
-      toast.error("Maximum images reached", {
-        description: "You can only attach up to 4 images per message.",
-      })
-      return
-    }
-
-    for (const item of Array.from(items)) {
-      if (item.type.startsWith("image/")) {
-        e.preventDefault()
-        const file = item.getAsFile()
-        if (file) {
-          const files = new DataTransfer()
-          files.items.add(file)
-          handleImageUpload(files.files)
-        }
-      }
-    }
-  }
-
-  const removeImage = (index: number) => {
-    setAttachedImages((prev) => prev.filter((_, i) => i !== index))
-  }
+  }, [open, currentConversationId, createNewConversation])
 
   const updateChatModel = (model: ChatModel) => {
     setPrefs((p) => ({ ...p, chatModel: model }))
@@ -239,19 +161,6 @@ const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, r
     }))
   }
 
-  const stopStream = (convId: string) => {
-    const controller = streamingControllers.get(convId)
-    if (controller) {
-      controller.abort()
-      setStreamingControllers((prev) => {
-        const next = new Map(prev)
-        next.delete(convId)
-        return next
-      })
-      setIsLoading(false)
-    }
-  }
-
   const copyToClipboard = useCallback(async (messageId: string, content: string) => {
     try {
       await navigator.clipboard.writeText(content)
@@ -261,209 +170,6 @@ const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, r
       console.error('Failed to copy:', error)
     }
   }, [])
-
-  const startEditingMessage = useCallback((messageId: string) => {
-    const conv = prefs.conversations.find((c) => c.id === currentConversationId)
-    if (!conv) return
-
-    const msg = conv.messages.find((m) => m.id === messageId)
-    if (!msg) return
-
-    setEditingMessageId(msg.id)
-    setEditingMessageText(msg.content)
-    setEditingMessageImages(msg.images || [])
-  }, [prefs.conversations, currentConversationId])
-
-  const cancelEditingMessage = useCallback(() => {
-    setEditingMessageId(null)
-    setEditingMessageText("")
-    setEditingMessageImages([])
-  }, [])
-
-  const regenerateAssistantResponse = useCallback(async (messages: ChatMessageType[], model: ChatModel) => {
-    if (!currentConversationId) return
-
-    setIsLoading(true)
-
-    const assistantMessage: ChatMessageType = {
-      id: `msg-${Date.now()}`,
-      role: "assistant",
-      content: "",
-      timestamp: Date.now(),
-    }
-
-    setPrefs((p) => ({
-      ...p,
-      conversations: p.conversations.map((c) =>
-        c.id === currentConversationId
-          ? { ...c, messages: [...messages, assistantMessage], updatedAt: Date.now() }
-          : c
-      ),
-    }))
-
-    const controller = new AbortController()
-    setStreamingControllers((prev) => new Map(prev).set(currentConversationId, controller))
-
-    try {
-      const stream = sendChatMessage(messages, model, controller.signal)
-
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          setPrefs((p) => ({
-            ...p,
-            conversations: p.conversations.map((c) =>
-              c.id === currentConversationId
-                ? {
-                    ...c,
-                    messages: c.messages.map((m) =>
-                      m.id === assistantMessage.id ? { ...m, content: m.content + chunk.content } : m
-                    ),
-                    updatedAt: Date.now(),
-                  }
-                : c
-            ),
-          }))
-        }
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-      } else {
-        const errorMsg = error instanceof Error ? error.message : "Unknown error occurred"
-        setPrefs((p) => ({
-          ...p,
-          conversations: p.conversations.map((c) =>
-            c.id === currentConversationId
-              ? {
-                  ...c,
-                  messages: c.messages.map((m) =>
-                    m.id === assistantMessage.id ? { ...m, content: `Error: ${errorMsg}` } : m
-                  ),
-                }
-              : c
-          ),
-        }))
-      }
-    } finally {
-      setStreamingControllers((prev) => {
-        const next = new Map(prev)
-        next.delete(currentConversationId)
-        return next
-      })
-      setIsLoading(false)
-    }
-  }, [currentConversationId, setPrefs, setIsLoading, setStreamingControllers])
-
-  const saveEditedMessage = useCallback(async () => {
-    if (!editingMessageId || !currentConversationId) return
-    const conv = prefs.conversations.find((c) => c.id === currentConversationId)
-    if (!conv) return
-
-    const messageIndex = conv.messages.findIndex((m) => m.id === editingMessageId)
-    if (messageIndex === -1) return
-
-    const updatedMessage: ChatMessageType = {
-      ...conv.messages[messageIndex],
-      content: editingMessageText,
-      images: editingMessageImages.length > 0 ? editingMessageImages : undefined,
-    }
-
-    const newMessages = conv.messages.slice(0, messageIndex + 1)
-    newMessages[messageIndex] = updatedMessage
-
-    setPrefs((p) => ({
-      ...p,
-      conversations: p.conversations.map((c) =>
-        c.id === currentConversationId
-          ? { ...c, messages: newMessages, updatedAt: Date.now() }
-          : c
-      ),
-    }))
-
-    cancelEditingMessage()
-
-    if (updatedMessage.role === "user") {
-      await regenerateAssistantResponse(newMessages, conv.model)
-    }
-  }, [editingMessageId, currentConversationId, prefs.conversations, editingMessageText, editingMessageImages, setPrefs, cancelEditingMessage, regenerateAssistantResponse])
-
-  const removeEditImage = useCallback((index: number) => {
-    setEditingMessageImages((prev) => prev.filter((_, i) => i !== index))
-  }, [])
-
-  const handleEditImageUpload = useCallback(async (files: FileList | null) => {
-    if (!files) return
-    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"))
-
-    const remainingSlots = 4 - editingMessageImages.length
-    if (remainingSlots <= 0) {
-      toast.error("Maximum images reached", {
-        description: "You can only attach up to 4 images per message.",
-      })
-      return
-    }
-
-    const filesToProcess = imageFiles.slice(0, remainingSlots)
-
-    for (const file of filesToProcess) {
-      try {
-        const resizedDataUrl = await resizeImage(file)
-        setEditingMessageImages((prev) => [...prev, resizedDataUrl])
-      } catch (error) {
-        console.error('Failed to process image:', error)
-        toast.error("Failed to process image", {
-          description: `Could not process ${file.name}. Please try another image.`,
-        })
-      }
-    }
-
-    if (imageFiles.length > remainingSlots) {
-      toast.warning("Some images not added", {
-        description: `Only added ${remainingSlots} image(s). Maximum 4 images total.`,
-      })
-    }
-  }, [editingMessageImages.length])
-
-  const retryMessage = useCallback(async (messageId: string, modifier?: string, newModel?: ChatModel) => {
-    if (!currentConversationId || isLoading) return
-    const conv = prefs.conversations.find((c) => c.id === currentConversationId)
-    if (!conv) return
-
-    const messageIndex = conv.messages.findIndex((m) => m.id === messageId)
-    if (messageIndex === -1 || conv.messages[messageIndex].role !== "assistant") return
-
-    const messagesToRetry = conv.messages.slice(0, messageIndex)
-
-    let finalMessages = [...messagesToRetry]
-    if (modifier && finalMessages.length > 0) {
-      const lastUserMsgIndex = finalMessages.length - 1
-      const lastMsg = finalMessages[lastUserMsgIndex]
-      finalMessages[lastUserMsgIndex] = {
-        ...lastMsg,
-        content: `${lastMsg.content}\n\n[${modifier}]`
-      }
-    }
-
-    const modelToUse = newModel || conv.model
-    if (newModel) {
-      setPrefs((p) => ({
-        ...p,
-        conversations: p.conversations.map((c) =>
-          c.id === currentConversationId ? { ...c, model: newModel } : c
-        ),
-      }))
-    }
-
-    setPrefs((p) => ({
-      ...p,
-      conversations: p.conversations.map((c) =>
-        c.id === currentConversationId
-          ? { ...c, messages: messagesToRetry, updatedAt: Date.now() }
-          : c
-      ),
-    }))
-
-    await regenerateAssistantResponse(finalMessages, modelToUse)
-  }, [currentConversationId, isLoading, prefs.conversations, setPrefs, regenerateAssistantResponse])
 
   const sendMessage = async () => {
     if ((!inputMessage.trim() && attachedImages.length === 0) || isLoading) return
@@ -479,7 +185,7 @@ const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, r
     }
 
     const userMessage: ChatMessageType = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-user`,
       role: "user",
       content: inputMessage,
       timestamp: Date.now(),
@@ -503,7 +209,7 @@ const ChatSidebar = forwardRef<ChatSidebarRef, Props>(({ open, onOpenChange }, r
     }
 
     setInputMessage("")
-    setAttachedImages([])
+    clearImages()
 
     await regenerateAssistantResponse([...conv.messages, userMessage], conv.model)
   }

@@ -1,13 +1,13 @@
 import { useState, useEffect, lazy, Suspense, useRef } from "react"
-import AuroraCanvas from "./components/AuroraCanvas"
-import SearchBar from "./components/SearchBar.tsx"
-import Clock from "./components/Clock"
-import QuickLinks from "./components/QuickLinks.tsx"
+import AuroraCanvas from "./features/background/components/AuroraCanvas"
+import SearchBar from "./features/search/components/SearchBar"
+import Clock from "./features/clock/components/Clock"
+import QuickLinks from "./features/quicklinks/components/QuickLinks"
 import WidgetContainer from "./components/WidgetContainer"
 import SettingsFab from "./features/settings/components/SettingsFab"
-import ShortcutsDialog from "./components/ShortcutsDialog.tsx"
+import ShortcutsDialog from "./features/shortcuts/components/ShortcutsDialog"
 import PasswordDialog from "./features/security/components/PasswordDialog"
-import DevModeOverlay from "./components/DevModeOverlay"
+import DevModeOverlay from "./features/dev/components/DevModeOverlay"
 import { Toaster } from "./components/ui/sonner"
 import { PrefsProvider, usePrefs } from "@/lib/prefs"
 import { getShortcuts, matchesShortcut, type ShortcutBinding } from "@/lib/shortcuts"
@@ -15,7 +15,7 @@ import { getSecurityConfig, isSessionUnlocked, refreshSession } from "@/lib/pass
 import { migrateFromPlaintext } from "@/lib/api-keys"
 
 const ChatSidebar = lazy(() => import("./features/chat/components/ChatSidebar"))
-const ChatFab = lazy(() => import("./components/ChatFab.tsx"))
+const ChatFab = lazy(() => import("./features/chat/components/ChatFab"))
 import type { ChatSidebarRef } from "./features/chat/components/ChatSidebar"
 
 function AppBody() {

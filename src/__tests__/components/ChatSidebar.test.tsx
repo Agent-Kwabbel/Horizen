@@ -5,7 +5,7 @@ import { createRef } from 'react'
 import ChatSidebar, { type ChatSidebarRef } from '@/features/chat/components/ChatSidebar'
 
 // Mock the chat API
-vi.mock('@/lib/chat-api', () => ({
+vi.mock('@/features/chat/services/chat-api', () => ({
   sendChatMessage: vi.fn(async function* () {
     yield { content: 'Test response' }
   }),
@@ -498,7 +498,7 @@ describe('ChatSidebar', () => {
       const user = userEvent.setup()
 
       // Mock a streaming response that takes time
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
       vi.mocked(sendChatMessage).mockImplementation(async function* () {
         yield { content: 'Start', done: false }
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -547,7 +547,7 @@ describe('ChatSidebar', () => {
       const user = userEvent.setup()
 
       // Mock a quick streaming response
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
       vi.mocked(sendChatMessage).mockImplementation(async function* () {
         yield { content: 'Quick response', done: false }
         yield { content: '', done: true }
@@ -588,7 +588,7 @@ describe('ChatSidebar', () => {
       const user = userEvent.setup()
 
       // Mock a long streaming response with abort handling
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
       vi.mocked(sendChatMessage).mockImplementation(async function* (messages, model, signal) {
         yield { content: 'Start', done: false }
 
@@ -650,7 +650,7 @@ describe('ChatSidebar', () => {
     it('should not display error message when stream is stopped by user', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
       vi.mocked(sendChatMessage).mockImplementation(async function* (messages, model, signal) {
         yield { content: 'Starting', done: false }
 
@@ -712,7 +712,7 @@ describe('ChatSidebar', () => {
     it('should allow sending new message immediately after stopping', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
 
       // First call - will be aborted
       let callCount = 0
@@ -791,7 +791,7 @@ describe('ChatSidebar', () => {
     it('should handle multiple conversations streaming independently', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
 
       vi.mocked(sendChatMessage).mockImplementation(async function* (messages, model, signal) {
         yield { content: 'Response', done: false }
@@ -849,7 +849,7 @@ describe('ChatSidebar', () => {
     it('should stop only the current conversation when stop is clicked', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
 
       vi.mocked(sendChatMessage).mockImplementation(async function* (messages, model, signal) {
         yield { content: 'Start', done: false }
@@ -906,7 +906,7 @@ describe('ChatSidebar', () => {
     it('should work with message edit and regeneration', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
 
       // First call completes, second can be aborted
       let callCount = 0
@@ -960,7 +960,7 @@ describe('ChatSidebar', () => {
     it('should clean up abort controllers on stream completion', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
       vi.mocked(sendChatMessage).mockImplementation(async function* () {
         yield { content: 'Response', done: false }
         yield { content: '', done: true }
@@ -1003,7 +1003,7 @@ describe('ChatSidebar', () => {
     it('should clean up abort controllers on error', async () => {
       const user = userEvent.setup()
 
-      const { sendChatMessage } = await import('@/lib/chat-api')
+      const { sendChatMessage } = await import('@/features/chat/services/chat-api')
       vi.mocked(sendChatMessage).mockImplementation(async function* () {
         yield { content: 'Start', done: false }
         throw new Error('Network error')

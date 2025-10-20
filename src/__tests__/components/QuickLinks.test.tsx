@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import QuickLinks from '@/components/QuickLinks'
+import QuickLinks from '@/features/quicklinks/components/QuickLinks'
 import type { QuickLink } from '@/lib/prefs'
 
 const mockLinks: QuickLink[] = [

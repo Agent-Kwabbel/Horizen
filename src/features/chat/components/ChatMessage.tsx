@@ -2,7 +2,7 @@ import { useRef, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Paperclip, Check, X, Loader2 } from "lucide-react"
-import MessageContent from "@/components/MessageContent"
+import MessageContent from "./MessageContent"
 import ChatMessageActions from "./ChatMessageActions"
 import type { ChatMessage as ChatMessageType, ChatConversation, ChatModel } from "@/lib/prefs"
 

@@ -27,13 +27,16 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Plus, Trash2, Settings, Eye, EyeOff, HelpCircle, Keyboard, Download, Upload, Shield, Lock, Unlock, AlertTriangle, Blocks } from "lucide-react"
+import { Plus, Trash2, Settings, HelpCircle, Keyboard, Download, Upload, Shield, Lock, Unlock, AlertTriangle, Blocks } from "lucide-react"
 import ExportDialog from "@/features/security/components/ExportDialog"
 import ImportDialog from "@/features/security/components/ImportDialog"
 import PasswordDialog from "@/features/security/components/PasswordDialog"
 import ChangePasswordDialog from "@/features/security/components/ChangePasswordDialog"
 import WidgetSettings from "./WidgetSettings"
 import SettingsAbout from "./SettingsAbout"
+import SettingsApiKeys from "./SettingsApiKeys"
+import SettingsSecurity from "./SettingsSecurity"
+import SettingsQuickLinks from "./SettingsQuickLinks"
 import { isSessionUnlocked, lockSession, isPasswordProtectionEnabled, disablePasswordProtection, getDerivedKey } from "@/lib/password"
 import { toast } from "sonner"
 
@@ -43,23 +46,11 @@ type SettingsFabProps = {
   onOpenShortcuts?: () => void
 }
 
-const ICON_CHOICES: { key: IconKey; label: string }[] = [
-  { key: "youtube", label: "YouTube" },
-  { key: "chat", label: "Chat" },
-  { key: "mail", label: "Mail" },
-  { key: "drive", label: "Drive" },
-  { key: "github", label: "GitHub" },
-  { key: "globe", label: "Globe" },
-]
-
 export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: SettingsFabProps = {}) {
   const { prefs, setPrefs } = usePrefs()
   const newId = useId()
 
   const [apiKeys, setApiKeys] = useState<{ openai?: string; anthropic?: string; gemini?: string }>({})
-  const [showOpenAIKey, setShowOpenAIKey] = useState(false)
-  const [showAnthropicKey, setShowAnthropicKey] = useState(false)
-  const [showGeminiKey, setShowGeminiKey] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [passwordSetupOpen, setPasswordSetupOpen] = useState(false)
@@ -325,156 +316,11 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
                 </p>
               </div>
 
-              {keysLocked ? (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <Lock className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-yellow-300">API Keys Locked</p>
-                      <p className="text-xs text-yellow-200/90 mt-1">
-                        Unlock your session in the Security section below to view and edit your API keys.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <Label htmlFor="openai-key" className="text-xs font-normal text-white/80">
-                        OpenAI API Key
-                      </Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-white/50 hover:text-white/80 transition-colors">
-                            <HelpCircle className="w-3.5 h-3.5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[280px]">
-                          <p className="font-semibold mb-1">Get your OpenAI API key:</p>
-                          <p>1. Visit platform.openai.com</p>
-                          <p>2. Sign in or create account</p>
-                          <p>3. Go to API keys section</p>
-                          <p>4. Create new secret key</p>
-                          <p className="mt-1 text-white/70">Required for GPT models. Keys start with "sk-"</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        id="openai-key"
-                        type={showOpenAIKey ? "text" : "password"}
-                        value={apiKeys.openai || ""}
-                        onChange={(e) => setApiKeys({ ...apiKeys, openai: e.target.value })}
-                        placeholder="sk-..."
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white/70 hover:text-white hover:bg-white/10"
-                        onClick={() => setShowOpenAIKey(!showOpenAIKey)}
-                      >
-                        {showOpenAIKey ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <Label htmlFor="anthropic-key" className="text-xs font-normal text-white/80">
-                        Anthropic API Key
-                      </Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-white/50 hover:text-white/80 transition-colors">
-                            <HelpCircle className="w-3.5 h-3.5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[280px]">
-                          <p className="font-semibold mb-1">Get your Anthropic API key:</p>
-                          <p>1. Visit console.anthropic.com</p>
-                          <p>2. Sign in or create account</p>
-                          <p>3. Go to API keys section</p>
-                          <p>4. Create new API key</p>
-                          <p className="mt-1 text-white/70">Required for Claude models. Keys start with "sk-ant-"</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        id="anthropic-key"
-                        type={showAnthropicKey ? "text" : "password"}
-                        value={apiKeys.anthropic || ""}
-                        onChange={(e) => setApiKeys({ ...apiKeys, anthropic: e.target.value })}
-                        placeholder="sk-ant-..."
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white/70 hover:text-white hover:bg-white/10"
-                        onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                      >
-                        {showAnthropicKey ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-1 mb-1">
-                      <Label htmlFor="gemini-key" className="text-xs font-normal text-white/80">
-                        Gemini API Key
-                      </Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-white/50 hover:text-white/80 transition-colors">
-                            <HelpCircle className="w-3.5 h-3.5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-[280px]">
-                          <p className="font-semibold mb-1">Get your Gemini API key:</p>
-                          <p>1. Visit aistudio.google.com/apikey</p>
-                          <p>2. Sign in with Google account</p>
-                          <p>3. Click "Create API key"</p>
-                          <p>4. Copy the generated key</p>
-                          <p className="mt-1 text-white/70">Required for Gemini models. Free tier available.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        id="gemini-key"
-                        type={showGeminiKey ? "text" : "password"}
-                        value={apiKeys.gemini || ""}
-                        onChange={(e) => setApiKeys({ ...apiKeys, gemini: e.target.value })}
-                        placeholder="AIza..."
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white/70 hover:text-white hover:bg-white/10"
-                        onClick={() => setShowGeminiKey(!showGeminiKey)}
-                      >
-                        {showGeminiKey ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <SettingsApiKeys
+                apiKeys={apiKeys}
+                keysLocked={keysLocked}
+                onApiKeysChange={setApiKeys}
+              />
             </div>
 
             <div>
@@ -488,118 +334,19 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
                 </p>
               </div>
 
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-yellow-300 text-xs">Beta Feature</p>
-                    <p className="text-xs text-yellow-200/90 mt-0.5">
-                      Password protection is experimental. Keep a secure backup of your API keys.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {/* Security Status */}
-                <div className="bg-white/5 rounded-lg p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        {securityStatus.enabled ? (
-                          <Shield className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <Shield className="w-4 h-4 text-orange-400" />
-                        )}
-                        <span className="text-sm font-medium">
-                          {securityStatus.enabled ? "Password Protection Enabled" : "Password Protection Disabled"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-white/60">
-                        {securityStatus.enabled
-                          ? "API keys encrypted with password-derived key (PBKDF2 + AES-256)"
-                          : "API keys encrypted with stored key (less secure)"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {securityStatus.enabled && (
-                    <div className="flex items-center gap-2 text-xs mt-2 pt-2 border-t border-white/10">
-                      {securityStatus.unlocked ? (
-                        <>
-                          <Unlock className="w-3 h-3 text-green-400" />
-                          <span className="text-green-300">Session Unlocked</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-3 h-3 text-yellow-400" />
-                          <span className="text-yellow-300">Session Locked</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Security Actions */}
-                <div className="space-y-2">
-                  {!securityStatus.enabled ? (
-                    <Button
-                      onClick={() => setPasswordSetupOpen(true)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Enable Password Protection
-                    </Button>
-                  ) : (
-                    <>
-                      {securityStatus.unlocked ? (
-                        <>
-                          <Button
-                            onClick={() => {
-                              lockSession()
-                              updateSecurityStatus()
-                              setKeysLocked(true)
-                              setApiKeys({})
-                            }}
-                            className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                          >
-                            <Lock className="w-4 h-4 mr-2" />
-                            Lock Session
-                          </Button>
-                          <Button
-                            onClick={() => setPasswordChangeOpen(true)}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            Change Password
-                          </Button>
-                          <Button
-                            onClick={() => setPasswordDisableOpen(true)}
-                            variant="outline"
-                            className="w-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10"
-                          >
-                            Disable Password Protection
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            onClick={() => setPasswordUnlockOpen(true)}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            <Unlock className="w-4 h-4 mr-2" />
-                            Unlock Session
-                          </Button>
-                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mt-2">
-                            <p className="text-xs text-yellow-200">
-                              Unlock your session to change or disable password protection.
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
+              <SettingsSecurity
+                securityStatus={securityStatus}
+                onEnableProtection={() => setPasswordSetupOpen(true)}
+                onLockSession={() => {
+                  lockSession()
+                  updateSecurityStatus()
+                  setKeysLocked(true)
+                  setApiKeys({})
+                }}
+                onUnlockSession={() => setPasswordUnlockOpen(true)}
+                onChangePassword={() => setPasswordChangeOpen(true)}
+                onDisableProtection={() => setPasswordDisableOpen(true)}
+              />
             </div>
 
             <div>
@@ -737,73 +484,12 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
                   />
                 </div>
 
-                <div className="space-y-2">
-                {prefs.links.map((l) => (
-                  <div
-                    key={l.id}
-                    className="bg-white/5 rounded-lg p-3 space-y-2"
-                  >
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Label htmlFor={`name-${l.id}`} className="text-xs font-normal text-white/70 mb-1 block">
-                          Name
-                        </Label>
-                        <Input
-                          id={`name-${l.id}`}
-                          value={l.label}
-                          onChange={(e) => updateLink(l.id, { label: e.target.value })}
-                          className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
-                          placeholder="YouTube"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`icon-${l.id}`} className="text-xs font-normal text-white/70 mb-1 block">
-                          Icon
-                        </Label>
-                        <Select value={l.icon} onValueChange={(v: IconKey) => updateLink(l.id, { icon: v })}>
-                          <SelectTrigger id={`icon-${l.id}`} className="bg-white/5 border-white/10 text-white w-[120px]">
-                            <SelectValue placeholder="Icon" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-black/90 text-white border-white/10">
-                            {ICON_CHOICES.map((opt) => (
-                              <SelectItem key={opt.key} value={opt.key}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="pt-5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-white/70 hover:text-red-300 hover:bg-red-500/10"
-                          onClick={() => removeLink(l.id)}
-                          title="Remove"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor={`url-${l.id}`} className="text-xs font-normal text-white/70 mb-1 block">
-                        URL
-                      </Label>
-                      <Input
-                        id={`url-${l.id}`}
-                        value={l.href}
-                        onChange={(e) => updateLink(l.id, { href: e.target.value })}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
-                        placeholder="https://youtube.com"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button onClick={addLink} className="mt-3 w-full bg-white/10 hover:bg-white/20 text-white">
-                <Plus className="w-4 h-4 mr-2" /> Add link
-              </Button>
+                <SettingsQuickLinks
+                  links={prefs.links}
+                  onAddLink={addLink}
+                  onUpdateLink={updateLink}
+                  onRemoveLink={removeLink}
+                />
               </div>
             </div>
 

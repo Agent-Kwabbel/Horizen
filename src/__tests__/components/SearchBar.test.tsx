@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@/test/utils'
 import userEvent from '@testing-library/user-event'
-import SearchBar from '@/components/SearchBar'
+import SearchBar from '@/features/search/components/SearchBar'
 
 // Mock the bangs.js import
 vi.mock('@/assets/bangs.js?raw', () => ({

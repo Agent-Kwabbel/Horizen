@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render } from '@testing-library/react'
-import BackgroundBlobs from '@/components/AuroraCanvas'
+import BackgroundBlobs from '@/features/background/components/AuroraCanvas'
 
 describe('AuroraCanvas (BackgroundBlobs)', () => {
   beforeEach(() => {

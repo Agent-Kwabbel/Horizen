@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WeatherWidgetConfig, QuoteWidgetConfig } from "@/lib/widgets"
+import type { WeatherWidgetConfig } from "@/lib/widgets"
 import { updateWidgetSettings } from "@/lib/widgets"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

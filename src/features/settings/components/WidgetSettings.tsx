@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WidgetType, WidgetConfig, WeatherWidgetConfig, NotesWidgetConfig } from "@/lib/widgets"
+import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig } from "@/lib/widgets"
 import { WIDGET_REGISTRY, createDefaultWidget, reorderWidgets, updateWidgetSettings } from "@/lib/widgets"
 import {
   Sheet,

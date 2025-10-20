@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const WidgetTypeSchema = z.enum(["weather", "notes", "quote"])
+export const WidgetTypeSchema = z.enum(["weather", "notes", "quote", "ticker"])
 export type WidgetType = z.infer<typeof WidgetTypeSchema>
 
 export const BaseWidgetConfigSchema = z.object({
@@ -34,6 +34,17 @@ export const QuoteWidgetSettingsSchema = z.object({
   rotateInterval: z.number().default(86400000), // 24 hours in ms
 })
 
+export const TickerSymbolSchema = z.object({
+  symbol: z.string(),
+  type: z.enum(["stock", "crypto"]),
+})
+
+export const TickerWidgetSettingsSchema = z.object({
+  symbols: z.array(TickerSymbolSchema).default([]),
+})
+
+export type TickerSymbol = z.infer<typeof TickerSymbolSchema>
+
 export const WeatherWidgetConfigSchema = BaseWidgetConfigSchema.extend({
   type: z.literal("weather"),
   settings: WeatherWidgetSettingsSchema,
@@ -49,15 +60,22 @@ export const QuoteWidgetConfigSchema = BaseWidgetConfigSchema.extend({
   settings: QuoteWidgetSettingsSchema,
 })
 
+export const TickerWidgetConfigSchema = BaseWidgetConfigSchema.extend({
+  type: z.literal("ticker"),
+  settings: TickerWidgetSettingsSchema,
+})
+
 export const WidgetConfigSchema = z.discriminatedUnion("type", [
   WeatherWidgetConfigSchema,
   NotesWidgetConfigSchema,
   QuoteWidgetConfigSchema,
+  TickerWidgetConfigSchema,
 ])
 
 export type WeatherWidgetConfig = z.infer<typeof WeatherWidgetConfigSchema>
 export type NotesWidgetConfig = z.infer<typeof NotesWidgetConfigSchema>
 export type QuoteWidgetConfig = z.infer<typeof QuoteWidgetConfigSchema>
+export type TickerWidgetConfig = z.infer<typeof TickerWidgetConfigSchema>
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>
 
 export const WidgetsSchema = z.array(WidgetConfigSchema)
@@ -99,6 +117,15 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
       rotateInterval: 86400000,
     },
   },
+  ticker: {
+    type: "ticker",
+    name: "Market Tracker",
+    description: "Track stocks and crypto prices",
+    icon: "trending-up",
+    defaultSettings: {
+      symbols: [],
+    },
+  },
 }
 
 export function createDefaultWidget(type: WidgetType, order: number = 0): WidgetConfig {
@@ -129,6 +156,14 @@ export function createDefaultWidget(type: WidgetType, order: number = 0): Widget
         enabled: true,
         order,
         settings: metadata.defaultSettings as QuoteWidgetConfig["settings"],
+      }
+    case "ticker":
+      return {
+        id: baseId,
+        type: "ticker",
+        enabled: true,
+        order,
+        settings: metadata.defaultSettings as TickerWidgetConfig["settings"],
       }
   }
 }
@@ -188,6 +223,11 @@ export function updateWidgetSettings(
           ...widget,
           settings: { ...widget.settings, ...settings },
         } as QuoteWidgetConfig
+      case "ticker":
+        return {
+          ...widget,
+          settings: { ...widget.settings, ...settings },
+        } as TickerWidgetConfig
       default:
         return widget
     }

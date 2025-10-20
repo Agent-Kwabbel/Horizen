@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig } from "@/lib/widgets"
+import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, TickerSymbol } from "@/lib/widgets"
 import { WIDGET_REGISTRY, createDefaultWidget, reorderWidgets, updateWidgetSettings } from "@/lib/widgets"
 import {
   Sheet,
@@ -19,7 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronUp, ChevronDown, Trash2, Plus, Cloud, StickyNote, Quote } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ChevronUp, ChevronDown, Trash2, Plus, Cloud, StickyNote, Quote, TrendingUp, X, Coins, HelpCircle } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 type WidgetSettingsProps = {
   open: boolean
@@ -30,11 +32,13 @@ const WIDGET_ICONS = {
   weather: Cloud,
   notes: StickyNote,
   quote: Quote,
+  ticker: TrendingUp,
 }
 
 export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsProps) {
   const { prefs, setPrefs } = usePrefs()
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null)
+  const [tickerType, setTickerType] = useState<"stock" | "crypto">("stock")
 
   const handleDelete = (id: string) => {
     setPrefs((p) => ({
@@ -94,6 +98,15 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
       ...p,
       widgets: updateWidgetSettings(p.widgets, widgetId, {
         quickJot: checked,
+      }),
+    }))
+  }
+
+  const handleTickerSymbolsChange = (widgetId: string, symbols: TickerSymbol[]) => {
+    setPrefs((p) => ({
+      ...p,
+      widgets: updateWidgetSettings(p.widgets, widgetId, {
+        symbols,
       }),
     }))
   }
@@ -166,7 +179,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
                         </div>
 
-                        {(widget.type === "weather" || widget.type === "notes") && (
+                        {(widget.type === "weather" || widget.type === "notes" || widget.type === "ticker") && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -267,6 +280,169 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 <SelectItem value="inch">Inches (in)</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+                      )}
+
+                      {isExpanded && widget.type === "ticker" && (
+                        <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <Label htmlFor={`ticker-symbol-${widget.id}`} className="text-xs font-normal text-white/70">
+                                Add Ticker Symbol
+                              </Label>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button className="text-white/50 hover:text-white/80 transition-colors">
+                                      <HelpCircle className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-[320px]">
+                                    <p className="font-semibold mb-1">What symbols can I use?</p>
+                                    <p className="mb-2"><strong>Stocks:</strong> Standard ticker symbols (AAPL, GOOGL, TSLA, MSFT). Most US stocks work, international availability varies.</p>
+                                    <p className="mb-2"><strong>Crypto:</strong> Common symbols like BTC, ETH, SOL or full names like bitcoin, ethereum, solana.</p>
+                                    <p className="font-semibold mb-1 mt-2">Where does the data come from?</p>
+                                    <p className="mb-1">• Stocks: Yahoo Finance</p>
+                                    <p>• Crypto: CoinGecko</p>
+                                    <p className="mt-2 text-white/70 text-xs">Prices update every 5 minutes. If a symbol doesn't work, it may not be available from the data source.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <div className="flex gap-2 mb-3">
+                              <Select
+                                value={tickerType}
+                                onValueChange={(v: "stock" | "crypto") => setTickerType(v)}
+                              >
+                                <SelectTrigger className="bg-white/5 border-white/10 text-white w-[100px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-black/90 text-white border-white/10">
+                                  <SelectItem value="stock">Stock</SelectItem>
+                                  <SelectItem value="crypto">Crypto</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                id={`ticker-symbol-${widget.id}`}
+                                placeholder={tickerType === "stock" ? "e.g. AAPL" : "e.g. BTC or bitcoin"}
+                                className="bg-white/5 border-white/10 text-white placeholder:text-white/40 flex-1"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const input = e.currentTarget
+                                    const value = input.value.trim()
+                                    if (value && (widget as TickerWidgetConfig).settings.symbols.length < 5) {
+                                      const currentSymbols = (widget as TickerWidgetConfig).settings.symbols
+                                      if (!currentSymbols.some(s => s.symbol.toLowerCase() === value.toLowerCase())) {
+                                        const displaySymbol = tickerType === "stock" ? value.toUpperCase() : value
+                                        handleTickerSymbolsChange(widget.id, [...currentSymbols, { symbol: displaySymbol, type: tickerType }])
+                                        input.value = ''
+                                      }
+                                    }
+                                  }
+                                }}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-white/70 hover:text-white hover:bg-white/10"
+                                onClick={() => {
+                                  const input = document.getElementById(`ticker-symbol-${widget.id}`) as HTMLInputElement
+                                  const value = input.value.trim()
+                                  if (value && (widget as TickerWidgetConfig).settings.symbols.length < 5) {
+                                    const currentSymbols = (widget as TickerWidgetConfig).settings.symbols
+                                    if (!currentSymbols.some(s => s.symbol.toLowerCase() === value.toLowerCase())) {
+                                      const displaySymbol = tickerType === "stock" ? value.toUpperCase() : value
+                                      handleTickerSymbolsChange(widget.id, [...currentSymbols, { symbol: displaySymbol, type: tickerType }])
+                                      input.value = ''
+                                    }
+                                  }
+                                }}
+                                disabled={(widget as TickerWidgetConfig).settings.symbols.length >= 5}
+                              >
+                                Add
+                              </Button>
+                            </div>
+
+                            <div className="text-xs text-white/50 mb-2">
+                              {(widget as TickerWidgetConfig).settings.symbols.length}/5 symbols
+                            </div>
+
+                            {(widget as TickerWidgetConfig).settings.symbols.length === 0 ? (
+                              <div className="text-xs text-white/40 py-2 text-center">
+                                No symbols added yet
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                {(widget as TickerWidgetConfig).settings.symbols.map((item, idx) => (
+                                  <div
+                                    key={`${item.symbol}-${item.type}`}
+                                    className="flex items-center gap-2 p-2 rounded bg-white/5 border border-white/10"
+                                  >
+                                    <div className="flex flex-col gap-0.5">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4 text-white/50 hover:text-white hover:bg-white/10 p-0"
+                                        onClick={() => {
+                                          const symbols = (widget as TickerWidgetConfig).settings.symbols
+                                          if (idx > 0) {
+                                            const newSymbols = [...symbols]
+                                            ;[newSymbols[idx - 1], newSymbols[idx]] = [newSymbols[idx], newSymbols[idx - 1]]
+                                            handleTickerSymbolsChange(widget.id, newSymbols)
+                                          }
+                                        }}
+                                        disabled={idx === 0}
+                                      >
+                                        <ChevronUp className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4 text-white/50 hover:text-white hover:bg-white/10 p-0"
+                                        onClick={() => {
+                                          const symbols = (widget as TickerWidgetConfig).settings.symbols
+                                          if (idx < symbols.length - 1) {
+                                            const newSymbols = [...symbols]
+                                            ;[newSymbols[idx], newSymbols[idx + 1]] = [newSymbols[idx + 1], newSymbols[idx]]
+                                            handleTickerSymbolsChange(widget.id, newSymbols)
+                                          }
+                                        }}
+                                        disabled={idx === (widget as TickerWidgetConfig).settings.symbols.length - 1}
+                                      >
+                                        <ChevronDown className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+
+                                    <div className="flex-1 relative">
+                                      <div className="text-sm font-medium">
+                                        {item.symbol.toUpperCase()}
+                                      </div>
+                                      {item.type === "stock" ? (
+                                        <TrendingUp className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 text-white/10" />
+                                      ) : (
+                                        <Coins className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 text-white/10" />
+                                      )}
+                                    </div>
+
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-white/50 hover:text-red-400 hover:bg-white/10"
+                                      onClick={() => {
+                                        const symbols = (widget as TickerWidgetConfig).settings.symbols
+                                        handleTickerSymbolsChange(
+                                          widget.id,
+                                          symbols.filter((s) => s.symbol !== item.symbol || s.type !== item.type)
+                                        )
+                                      }}
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}

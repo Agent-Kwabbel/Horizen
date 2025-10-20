@@ -4,6 +4,7 @@ import type { WidgetConfig } from "@/lib/widgets"
 import WeatherWidget from "./WeatherWidget"
 import NotesWidget from "./NotesWidget"
 import QuoteWidget from "./QuoteWidget"
+import TickerWidget from "./TickerWidget"
 
 type WidgetRendererProps = {
   widget: WidgetConfig
@@ -17,6 +18,8 @@ function WidgetRenderer({ widget }: WidgetRendererProps) {
       return <NotesWidget config={widget} />
     case "quote":
       return <QuoteWidget config={widget} />
+    case "ticker":
+      return <TickerWidget config={widget} />
     default:
       return null
   }

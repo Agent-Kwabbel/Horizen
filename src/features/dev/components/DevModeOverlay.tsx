@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WeatherWidgetConfig } from "@/lib/widgets"
+import type { WeatherWidgetConfig, TickerWidgetConfig } from "@/lib/widgets"
 import { updateWidgetSettings } from "@/lib/widgets"
+import { createCacheKey } from "@/features/widgets/services/ticker-api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +24,12 @@ export default function DevModeOverlay() {
   const [overrideWind, setOverrideWind] = useState("")
   const [overridePrecipProb, setOverridePrecipProb] = useState("")
   const [overridePrecip, setOverridePrecip] = useState("")
+
+  // Ticker widget dev controls
+  const [tickerIndex, setTickerIndex] = useState("")
+  const [tickerName, setTickerName] = useState("")
+  const [tickerPrice, setTickerPrice] = useState("")
+  const [tickerChange, setTickerChange] = useState("")
 
   const handleSetWeatherLocation = (widgetId: string) => {
     const lat = parseFloat(weatherLat)
@@ -128,6 +135,61 @@ export default function DevModeOverlay() {
     link.download = "horizen-prefs.json"
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleOverrideTickerData = (widgetId: string) => {
+    const widget = prefs.widgets.find((w) => w.id === widgetId)
+    if (!widget || widget.type !== "ticker") return
+
+    const config = widget as TickerWidgetConfig
+    if (config.settings.symbols.length === 0) {
+      alert("Add at least one ticker symbol first")
+      return
+    }
+
+    const index = parseInt(tickerIndex) || 0
+    if (index < 0 || index >= config.settings.symbols.length) {
+      alert(`Index must be between 0 and ${config.settings.symbols.length - 1}`)
+      return
+    }
+
+    const price = parseFloat(tickerPrice) || 100
+    const change = parseFloat(tickerChange) || 0
+    const changePercent = (change / price) * 100
+    const name = tickerName || config.settings.symbols[index].symbol.toUpperCase()
+
+    const cacheKey = createCacheKey(config.settings.symbols)
+
+    const mockData = config.settings.symbols.map((item, idx) => ({
+      symbol: idx === index ? name : item.symbol.toUpperCase(),
+      price: idx === index ? price : 100,
+      change24h: idx === index ? change : 0,
+      changePercent24h: idx === index ? changePercent : 0,
+      name: idx === index ? name : item.symbol.toUpperCase(),
+    }))
+
+    localStorage.setItem(cacheKey, JSON.stringify({
+      t: Date.now(),
+      data: mockData,
+    }))
+
+    setTickerIndex("")
+    setTickerName("")
+    setTickerPrice("")
+    setTickerChange("")
+
+    window.location.reload()
+  }
+
+  const handleClearTickerCache = (widgetId: string) => {
+    const widget = prefs.widgets.find((w) => w.id === widgetId)
+    if (!widget || widget.type !== "ticker") return
+
+    const config = widget as TickerWidgetConfig
+    const cacheKey = createCacheKey(config.settings.symbols)
+
+    localStorage.removeItem(cacheKey)
+    window.location.reload()
   }
 
 
@@ -376,6 +438,102 @@ export default function DevModeOverlay() {
                           <div className="space-y-3">
                             <div className="text-xs text-white/50 font-mono">
                               No dev controls needed - quotes rotate automatically!
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Ticker Widget Controls */}
+                        {widget.type === "ticker" && (
+                          <div className="space-y-4">
+                            {/* Current Symbols */}
+                            <div className="space-y-2">
+                              <div className="text-xs font-mono text-yellow-500">CONFIGURED SYMBOLS</div>
+                              <div className="text-xs text-white/50 font-mono">
+                                {(widget as TickerWidgetConfig).settings.symbols.length === 0 ? (
+                                  <span>No symbols configured</span>
+                                ) : (
+                                  <div className="space-y-1">
+                                    {(widget as TickerWidgetConfig).settings.symbols.map((sym, idx) => (
+                                      <div key={idx}>
+                                        [Index {idx}] {sym.symbol.toUpperCase()} ({sym.type})
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Override Data Section */}
+                            <div className="space-y-3 pt-3 border-t border-white/10">
+                              <div className="text-xs font-mono text-yellow-500">OVERRIDE TICKER DATA</div>
+                              <div className="text-xs text-white/40">
+                                Override ticker values for testing
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs text-white/70">Index</Label>
+                                <Input
+                                  type="number"
+                                  value={tickerIndex}
+                                  onChange={(e) => setTickerIndex(e.target.value)}
+                                  placeholder="0"
+                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs text-white/70">Name</Label>
+                                <Input
+                                  value={tickerName}
+                                  onChange={(e) => setTickerName(e.target.value)}
+                                  placeholder="Optional override name"
+                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Price ($)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={tickerPrice}
+                                    onChange={(e) => setTickerPrice(e.target.value)}
+                                    placeholder="100"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Change ($)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={tickerChange}
+                                    onChange={(e) => setTickerChange(e.target.value)}
+                                    placeholder="5.00"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <Button
+                                onClick={() => handleOverrideTickerData(widget.id)}
+                                className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/50 h-8 text-sm"
+                              >
+                                Override Data
+                              </Button>
+
+                              <Button
+                                onClick={() => handleClearTickerCache(widget.id)}
+                                className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 h-8 text-sm"
+                              >
+                                Clear Cache
+                              </Button>
+                            </div>
+
+                            <div className="text-xs text-white/40 font-mono space-y-1 pt-2 border-t border-white/10">
+                              <div>After override, refresh the widget to see changes</div>
+                              <div>Clear cache to fetch real data again</div>
                             </div>
                           </div>
                         )}

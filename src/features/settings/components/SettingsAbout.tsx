@@ -7,7 +7,7 @@ export default function SettingsAbout() {
 
       <div className="bg-white/5 rounded-lg p-4 space-y-2 text-sm text-white/80">
         <p>
-          Horizen is a privacy-first browser start page combining powerful features: fast client side bang operators, AI chat supporting OpenAI, Anthropic, and Google Gemini, customizable quick links, and a local weather widget.
+          Horizen is a privacy-first browser start page combining powerful features: fast client side bang operators, AI chat supporting OpenAI, Anthropic, and Google Gemini, customizable quick links, a local weather widget, and a market tracker for stocks and cryptocurrencies.
         </p>
 
         <p>
@@ -19,7 +19,7 @@ export default function SettingsAbout() {
         </p>
 
         <p>
-          <strong className="text-white/90">Privacy:</strong> No data is sent to external servers except your chosen AI providers (OpenAI, Anthropic, or Google) when you send chat messages through secure Vercel Edge Functions. Weather data is fetched from Open-Meteo's free API. Search queries go directly to your search engine of choice. Your API keys are never stored on servers.
+          <strong className="text-white/90">Privacy:</strong> No data is sent to external servers except your chosen AI providers (OpenAI, Anthropic, or Google) when you send chat messages through secure Vercel Edge Functions. Weather data is fetched from Open-Meteo's free API. Market data is fetched from Yahoo Finance (stocks via CORS proxy) and CoinGecko (crypto). Search queries go directly to your search engine of choice. Your API keys are never stored on servers.
         </p>
 
         <p>

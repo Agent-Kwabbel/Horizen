@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '@/App'
 
@@ -92,25 +92,18 @@ describe('App Integration Tests', () => {
     expect(screen.getByText('Select location')).toBeInTheDocument()
   })
 
-  it('should hide WeatherWidget when preference is disabled', async () => {
-    const user = userEvent.setup()
+  it('should hide WeatherWidget when widgets are removed', () => {
+    // Set up localStorage with no widgets
+    localStorage.setItem('startpage:prefs', JSON.stringify({
+      widgets: [],
+      showChat: true,
+      showQuickLinks: true,
+    }))
+
     render(<App />)
 
-    expect(screen.getByText('Select location')).toBeInTheDocument()
-
-    const settingsButton = screen.getByTitle('Settings')
-    await user.click(settingsButton)
-
-    await waitFor(() => {
-      expect(screen.getByLabelText('Show weather')).toBeInTheDocument()
-    })
-
-    const weatherToggle = screen.getByLabelText('Show weather')
-    await user.click(weatherToggle)
-
-    await waitFor(() => {
-      expect(screen.queryByText('Select location')).not.toBeInTheDocument()
-    })
+    // Weather widget should not be present
+    expect(screen.queryByText('Select location')).not.toBeInTheDocument()
   })
 
   it('should render ChatFab by default', async () => {
@@ -377,25 +370,37 @@ describe('App Integration Tests', () => {
     })
   })
 
-  it('should persist preferences across component remounts', async () => {
-    const user = userEvent.setup()
+  it('should persist preferences across component remounts', () => {
+    // Set up localStorage with custom widgets (no weather widget)
+    localStorage.setItem('startpage:prefs', JSON.stringify({
+      widgets: [
+        {
+          id: 'notes-default',
+          type: 'notes',
+          enabled: true,
+          order: 0,
+          settings: {
+            content: '',
+            maxLength: 500,
+            quickJot: false,
+          },
+        },
+      ],
+      showChat: true,
+      showQuickLinks: true,
+    }))
+
     const { unmount } = render(<App />)
 
-    const settingsButton = screen.getByTitle('Settings')
-    await user.click(settingsButton)
-
-    await waitFor(() => {
-      expect(screen.getByLabelText('Show weather')).toBeInTheDocument()
-    })
-
-    const weatherToggle = screen.getByLabelText('Show weather')
-    await user.click(weatherToggle)
+    // Weather widget should not be present
+    expect(screen.queryByText('Select location')).not.toBeInTheDocument()
 
     unmount()
 
     // Render a new instance
     render(<App />)
 
+    // Verify weather widget is still not present after remount
     expect(screen.queryByText('Select location')).not.toBeInTheDocument()
   })
 
@@ -472,7 +477,7 @@ describe('App Integration Tests', () => {
     await user.click(settingsButton)
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Show weather')).toBeInTheDocument()
+      expect(screen.getByText('Search Engine')).toBeInTheDocument()
     })
 
     // Weather widget location button should still be accessible

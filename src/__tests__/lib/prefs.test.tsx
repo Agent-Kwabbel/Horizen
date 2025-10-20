@@ -1,17 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { PrefsProvider, usePrefs, type Prefs, type QuickLink } from '@/lib/prefs'
+import { DEFAULT_WIDGETS } from '@/lib/widgets'
 
 const DEFAULT_PREFS: Prefs = {
-  showWeather: true,
+  widgets: DEFAULT_WIDGETS,
   showChat: true,
   showQuickLinks: true,
   showVerifiedOrgModels: false,
-  weatherUnits: {
-    temperature: "celsius",
-    windSpeed: "ms",
-    precipitation: "mm",
-  },
   links: [
     { id: "1", label: "YouTube", href: "https://youtube.com", icon: "youtube" },
     { id: "2", label: "GitHub", href: "https://github.com", icon: "github" },
@@ -40,7 +36,7 @@ describe('PrefsProvider', () => {
   it('should load preferences from localStorage', () => {
     const customPrefs: Prefs = {
       ...DEFAULT_PREFS,
-      showWeather: false,
+      widgets: [],
       links: [{ id: "test", label: "Test", href: "https://test.com", icon: "globe" }],
     }
 
@@ -50,7 +46,7 @@ describe('PrefsProvider', () => {
       wrapper: PrefsProvider,
     })
 
-    expect(result.current.prefs.showWeather).toBe(false)
+    expect(result.current.prefs.widgets).toEqual([])
     expect(result.current.prefs.links).toEqual(customPrefs.links)
   })
 
@@ -62,7 +58,7 @@ describe('PrefsProvider', () => {
     act(() => {
       result.current.setPrefs(prev => ({
         ...prev,
-        showWeather: false,
+        widgets: [],
       }))
     })
 
@@ -70,7 +66,7 @@ describe('PrefsProvider', () => {
       const stored = localStorage.getItem('startpage:prefs')
       expect(stored).toBeTruthy()
       const parsed = JSON.parse(stored!)
-      expect(parsed.showWeather).toBe(false)
+      expect(parsed.widgets).toEqual([])
     })
   })
 
@@ -193,7 +189,7 @@ describe('PrefsProvider', () => {
 
     const newPrefs: Prefs = {
       ...DEFAULT_PREFS,
-      showWeather: false,
+      widgets: [],
       showChat: false,
     }
 
@@ -209,7 +205,7 @@ describe('PrefsProvider', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.prefs.showWeather).toBe(false)
+      expect(result.current.prefs.widgets).toEqual([])
       expect(result.current.prefs.showChat).toBe(false)
     })
   })

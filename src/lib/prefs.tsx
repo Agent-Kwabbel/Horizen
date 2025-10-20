@@ -1,5 +1,7 @@
 import { createContext, useContext, useMemo, useState, useEffect, useRef } from "react"
 import type { ReactNode } from "react"
+import type { WidgetConfig } from "./widgets"
+import { DEFAULT_WIDGETS } from "./widgets"
 
 export type IconKey = "youtube" | "chat" | "mail" | "drive" | "github" | "globe"
 export type QuickLink = { id: string; label: string; href: string; icon: IconKey }
@@ -42,16 +44,19 @@ export type WeatherUnits = {
 }
 
 export type Prefs = {
-  showWeather: boolean
+  widgets: WidgetConfig[]
   showChat: boolean
   showQuickLinks: boolean
   showVerifiedOrgModels: boolean
-  weatherUnits: WeatherUnits
   links: QuickLink[]
   chatModel: ChatModel
   conversations: ChatConversation[]
   searchEngineId: string
   customSearchEngines: SearchEngine[]
+
+  // Legacy fields for migration
+  showWeather?: boolean
+  weatherUnits?: WeatherUnits
 }
 
 const LS = "startpage:prefs"
@@ -67,15 +72,10 @@ export const BUILTIN_SEARCH_ENGINES: SearchEngine[] = [
 ]
 
 const DEFAULTS: Prefs = {
-  showWeather: true,
+  widgets: DEFAULT_WIDGETS,
   showChat: true,
   showQuickLinks: true,
   showVerifiedOrgModels: false,
-  weatherUnits: {
-    temperature: "celsius",
-    windSpeed: "ms",
-    precipitation: "mm",
-  },
   links: [
     { id: "1", label: "YouTube", href: "https://youtube.com", icon: "youtube" },
     { id: "2", label: "GitHub", href: "https://github.com", icon: "github" },
@@ -88,12 +88,42 @@ const DEFAULTS: Prefs = {
   customSearchEngines: [],
 }
 
+function migratePrefs(loaded: any): Prefs {
+  const migrated = { ...DEFAULTS, ...loaded }
+
+  // Migrate from old showWeather/weatherUnits to widgets
+  if (loaded.showWeather !== undefined && !loaded.widgets) {
+    migrated.widgets = [...DEFAULT_WIDGETS]
+
+    // Update weather widget based on old prefs
+    const weatherWidget = migrated.widgets.find((w: WidgetConfig) => w.type === "weather")
+    if (weatherWidget && weatherWidget.type === "weather") {
+      weatherWidget.enabled = loaded.showWeather
+
+      // Migrate weather units if they exist
+      if (loaded.weatherUnits) {
+        weatherWidget.settings = {
+          ...weatherWidget.settings,
+          units: loaded.weatherUnits,
+        }
+      }
+    }
+
+    // Clean up legacy fields
+    delete migrated.showWeather
+    delete migrated.weatherUnits
+  }
+
+  return migrated
+}
+
 function loadInitial(): Prefs {
   if (typeof window === "undefined") return DEFAULTS
   try {
     const raw = localStorage.getItem(LS)
     if (!raw) return DEFAULTS
-    return { ...DEFAULTS, ...JSON.parse(raw) }
+    const loaded = JSON.parse(raw)
+    return migratePrefs(loaded)
   } catch {
     return DEFAULTS
   }

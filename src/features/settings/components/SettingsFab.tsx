@@ -27,11 +27,12 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Plus, Trash2, Settings, Eye, EyeOff, HelpCircle, Keyboard, Download, Upload, Shield, Lock, Unlock, AlertTriangle } from "lucide-react"
+import { Plus, Trash2, Settings, Eye, EyeOff, HelpCircle, Keyboard, Download, Upload, Shield, Lock, Unlock, AlertTriangle, Blocks } from "lucide-react"
 import ExportDialog from "@/features/security/components/ExportDialog"
 import ImportDialog from "@/features/security/components/ImportDialog"
 import PasswordDialog from "@/features/security/components/PasswordDialog"
 import ChangePasswordDialog from "@/features/security/components/ChangePasswordDialog"
+import WidgetSettings from "./WidgetSettings"
 import SettingsAbout from "./SettingsAbout"
 import { isSessionUnlocked, lockSession, isPasswordProtectionEnabled, disablePasswordProtection, getDerivedKey } from "@/lib/password"
 import { toast } from "sonner"
@@ -65,6 +66,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
   const [passwordUnlockOpen, setPasswordUnlockOpen] = useState(false)
   const [passwordChangeOpen, setPasswordChangeOpen] = useState(false)
   const [passwordDisableOpen, setPasswordDisableOpen] = useState(false)
+  const [widgetSettingsOpen, setWidgetSettingsOpen] = useState(false)
   const [keysLocked, setKeysLocked] = useState(false)
   const [securityStatus, setSecurityStatus] = useState<{enabled: boolean; unlocked: boolean}>({
     enabled: isPasswordProtectionEnabled(),
@@ -186,93 +188,6 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             <div className="space-y-6">
             <div>
               <div className="mb-3">
-                <h3 className="text-lg font-semibold">Weather</h3>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="weather" className="font-normal">Show weather</Label>
-                    <p className="text-xs text-white/60">Hides and disables all weather fetching.</p>
-                  </div>
-                  <Switch
-                    id="weather"
-                    checked={prefs.showWeather}
-                    onCheckedChange={(v) => setPrefs({ ...prefs, showWeather: v })}
-                  />
-                </div>
-
-                {prefs.showWeather && (
-                  <>
-                    <div>
-                      <Label htmlFor="temp-unit" className="text-xs font-normal text-white/70 mb-2 block">
-                        Temperature Unit
-                      </Label>
-                      <Select
-                        value={prefs.weatherUnits.temperature}
-                        onValueChange={(v: "celsius" | "fahrenheit" | "kelvin") =>
-                          setPrefs({ ...prefs, weatherUnits: { ...prefs.weatherUnits, temperature: v } })
-                        }
-                      >
-                        <SelectTrigger id="temp-unit" className="bg-white/5 border-white/10 text-white w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-black/90 text-white border-white/10">
-                          <SelectItem value="celsius">Celsius (°C)</SelectItem>
-                          <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
-                          <SelectItem value="kelvin">Kelvin (K)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="wind-unit" className="text-xs font-normal text-white/70 mb-2 block">
-                        Wind Speed Unit
-                      </Label>
-                      <Select
-                        value={prefs.weatherUnits.windSpeed}
-                        onValueChange={(v: "ms" | "kmh" | "mph" | "knots") =>
-                          setPrefs({ ...prefs, weatherUnits: { ...prefs.weatherUnits, windSpeed: v } })
-                        }
-                      >
-                        <SelectTrigger id="wind-unit" className="bg-white/5 border-white/10 text-white w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-black/90 text-white border-white/10">
-                          <SelectItem value="ms">Meters per second (m/s)</SelectItem>
-                          <SelectItem value="kmh">Kilometers per hour (km/h)</SelectItem>
-                          <SelectItem value="mph">Miles per hour (mph)</SelectItem>
-                          <SelectItem value="knots">Knots (kts)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="precip-unit" className="text-xs font-normal text-white/70 mb-2 block">
-                        Precipitation Unit
-                      </Label>
-                      <Select
-                        value={prefs.weatherUnits.precipitation}
-                        onValueChange={(v: "mm" | "inch") =>
-                          setPrefs({ ...prefs, weatherUnits: { ...prefs.weatherUnits, precipitation: v } })
-                        }
-                      >
-                        <SelectTrigger id="precip-unit" className="bg-white/5 border-white/10 text-white w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-black/90 text-white border-white/10">
-                          <SelectItem value="mm">Millimeters (mm)</SelectItem>
-                          <SelectItem value="inch">Inches (in)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-3">
                 <h3 className="text-lg font-semibold">Search Engine</h3>
                 <p className="text-xs text-white/60 mt-1">
                   DuckDuckGo bang operators work with all search engines.
@@ -356,6 +271,23 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
                   <Plus className="w-4 h-4 mr-2" /> Add Custom Search Engine
                 </Button>
               </div>
+            </div>
+
+            <div>
+              <div className="mb-3">
+                <h3 className="text-lg font-semibold">Widgets</h3>
+                <p className="text-xs text-white/60 mt-1">
+                  Manage and configure your dashboard widgets.
+                </p>
+              </div>
+
+              <Button
+                onClick={() => setWidgetSettingsOpen(true)}
+                className="w-full bg-white/10 hover:bg-white/20 text-white"
+              >
+                <Blocks className="w-4 h-4 mr-2" />
+                Manage Widgets
+              </Button>
             </div>
 
             <div>
@@ -888,6 +820,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
 
       <ExportDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} />
       <ImportDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
+      <WidgetSettings open={widgetSettingsOpen} onOpenChange={setWidgetSettingsOpen} />
 
       <PasswordDialog
         mode="setup"

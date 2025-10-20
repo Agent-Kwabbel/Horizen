@@ -35,7 +35,7 @@ describe('SettingsFab', () => {
     })
   })
 
-  it('should display weather toggle', async () => {
+  it('should display widget management section', async () => {
     const user = userEvent.setup()
     render(<SettingsFab />)
 
@@ -43,11 +43,12 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Show weather')).toBeInTheDocument()
+      expect(screen.getByText('Widgets')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /manage widgets/i })).toBeInTheDocument()
     })
   })
 
-  it('should toggle weather setting', async () => {
+  it('should open widget settings when manage widgets is clicked', async () => {
     const user = userEvent.setup()
     render(<SettingsFab />)
 
@@ -55,15 +56,15 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      const weatherToggle = screen.getByLabelText('Show weather')
-      expect(weatherToggle).toBeChecked()
+      expect(screen.getByRole('button', { name: /manage widgets/i })).toBeInTheDocument()
     })
 
-    const weatherToggle = screen.getByLabelText('Show weather')
-    await user.click(weatherToggle)
+    const manageWidgetsButton = screen.getByRole('button', { name: /manage widgets/i })
+    await user.click(manageWidgetsButton)
 
     await waitFor(() => {
-      expect(weatherToggle).not.toBeChecked()
+      expect(screen.getByText('Widget Settings')).toBeInTheDocument()
+      expect(screen.getByText('Weather')).toBeInTheDocument()
     })
   })
 
@@ -464,12 +465,12 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      const weatherToggle = screen.getByLabelText('Show weather')
-      expect(weatherToggle).toBeInTheDocument()
+      const chatToggle = screen.getByLabelText('Show chat')
+      expect(chatToggle).toBeInTheDocument()
     })
 
-    const weatherToggle = screen.getByLabelText('Show weather')
-    await user.click(weatherToggle)
+    const chatToggle = screen.getByLabelText('Show chat')
+    await user.click(chatToggle)
 
     // Close the sheet (click outside or press escape)
     await user.keyboard('{Escape}')
@@ -481,8 +482,8 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      const weatherToggleAfter = screen.getByLabelText('Show weather')
-      expect(weatherToggleAfter).not.toBeChecked()
+      const chatToggleAfter = screen.getByLabelText('Show chat')
+      expect(chatToggleAfter).not.toBeChecked()
     })
   })
 
@@ -494,10 +495,10 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Show weather')).toBeInTheDocument()
       expect(screen.getByLabelText('Show chat')).toBeInTheDocument()
       expect(screen.getByLabelText('OpenAI API Key')).toBeInTheDocument()
       expect(screen.getByLabelText('Anthropic API Key')).toBeInTheDocument()
+      expect(screen.getByLabelText('Show quick links')).toBeInTheDocument()
     })
   })
 

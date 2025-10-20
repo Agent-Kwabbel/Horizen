@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import WeatherWidget from '@/components/WeatherWidget'
 import { PrefsProvider } from '@/lib/prefs'
+import type { WeatherWidgetConfig } from '@/lib/widgets'
 
 const mockWeatherData = {
   temperature_2m: 22.5,
@@ -34,7 +35,20 @@ const mockGeoResults = [
 ]
 
 describe('WeatherWidget', () => {
-  const renderWeatherWidget = () => render(<PrefsProvider><WeatherWidget /></PrefsProvider>)
+  const defaultConfig: WeatherWidgetConfig = {
+    id: 'weather-test',
+    type: 'weather',
+    enabled: true,
+    order: 0,
+    settings: {},
+  }
+
+  const renderWeatherWidget = (config: WeatherWidgetConfig = defaultConfig) =>
+    render(
+      <PrefsProvider>
+        <WeatherWidget config={config} />
+      </PrefsProvider>
+    )
 
   beforeEach(() => {
     localStorage.clear()
@@ -440,10 +454,107 @@ describe('WeatherWidget', () => {
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
 
-    const { container } = render(<PrefsProvider><WeatherWidget /></PrefsProvider>)
+    const { container } = render(
+      <PrefsProvider>
+        <WeatherWidget config={defaultConfig} />
+      </PrefsProvider>
+    )
 
     const locationElement = container.querySelector('.truncate')
     expect(locationElement).toBeInTheDocument()
     expect(locationElement).toHaveClass('truncate')
+  })
+
+  it('should respect configured temperature unit (Fahrenheit)', async () => {
+    const config: WeatherWidgetConfig = {
+      ...defaultConfig,
+      settings: {
+        units: {
+          temperature: 'fahrenheit',
+          windSpeed: 'ms',
+          precipitation: 'mm',
+        },
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ current: mockWeatherData }),
+    } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText('23°F')).toBeInTheDocument()
+    })
+  })
+
+  it('should respect configured wind speed unit (km/h)', async () => {
+    const config: WeatherWidgetConfig = {
+      ...defaultConfig,
+      settings: {
+        units: {
+          temperature: 'celsius',
+          windSpeed: 'kmh',
+          precipitation: 'mm',
+        },
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ current: mockWeatherData }),
+    } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText(/15 km\/h/)).toBeInTheDocument()
+    })
+  })
+
+  it('should respect configured precipitation unit (inches)', async () => {
+    const config: WeatherWidgetConfig = {
+      ...defaultConfig,
+      settings: {
+        units: {
+          temperature: 'celsius',
+          windSpeed: 'ms',
+          precipitation: 'inch',
+        },
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ current: mockWeatherData }),
+    } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText(/1\.2in/)).toBeInTheDocument()
+    })
   })
 })

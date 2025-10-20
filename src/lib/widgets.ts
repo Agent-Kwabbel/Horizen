@@ -1,0 +1,216 @@
+import { z } from "zod"
+
+export const WidgetTypeSchema = z.enum(["weather", "notes", "quote"])
+export type WidgetType = z.infer<typeof WidgetTypeSchema>
+
+export const BaseWidgetConfigSchema = z.object({
+  id: z.string(),
+  type: WidgetTypeSchema,
+  enabled: z.boolean(),
+  order: z.number(),
+})
+
+export const WeatherWidgetSettingsSchema = z.object({
+  location: z.object({
+    name: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+  }).optional(),
+  units: z.object({
+    temperature: z.enum(["celsius", "fahrenheit", "kelvin"]).default("celsius"),
+    windSpeed: z.enum(["ms", "kmh", "mph", "knots"]).default("ms"),
+    precipitation: z.enum(["mm", "inch"]).default("mm"),
+  }).optional(),
+})
+
+export const NotesWidgetSettingsSchema = z.object({
+  content: z.string().default(""),
+  maxLength: z.number().default(500),
+  quickJot: z.boolean().default(false),
+})
+
+export const QuoteWidgetSettingsSchema = z.object({
+  autoRotate: z.boolean().default(true),
+  rotateInterval: z.number().default(86400000), // 24 hours in ms
+})
+
+export const WeatherWidgetConfigSchema = BaseWidgetConfigSchema.extend({
+  type: z.literal("weather"),
+  settings: WeatherWidgetSettingsSchema,
+})
+
+export const NotesWidgetConfigSchema = BaseWidgetConfigSchema.extend({
+  type: z.literal("notes"),
+  settings: NotesWidgetSettingsSchema,
+})
+
+export const QuoteWidgetConfigSchema = BaseWidgetConfigSchema.extend({
+  type: z.literal("quote"),
+  settings: QuoteWidgetSettingsSchema,
+})
+
+export const WidgetConfigSchema = z.discriminatedUnion("type", [
+  WeatherWidgetConfigSchema,
+  NotesWidgetConfigSchema,
+  QuoteWidgetConfigSchema,
+])
+
+export type WeatherWidgetConfig = z.infer<typeof WeatherWidgetConfigSchema>
+export type NotesWidgetConfig = z.infer<typeof NotesWidgetConfigSchema>
+export type QuoteWidgetConfig = z.infer<typeof QuoteWidgetConfigSchema>
+export type WidgetConfig = z.infer<typeof WidgetConfigSchema>
+
+export const WidgetsSchema = z.array(WidgetConfigSchema)
+
+export type WidgetMetadata = {
+  type: WidgetType
+  name: string
+  description: string
+  icon: string
+  defaultSettings: Record<string, any>
+}
+
+export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
+  weather: {
+    type: "weather",
+    name: "Weather",
+    description: "Display current weather conditions",
+    icon: "cloud",
+    defaultSettings: {},
+  },
+  notes: {
+    type: "notes",
+    name: "Quick Notes",
+    description: "Jot down quick notes",
+    icon: "sticky-note",
+    defaultSettings: {
+      content: "",
+      maxLength: 500,
+      quickJot: false,
+    },
+  },
+  quote: {
+    type: "quote",
+    name: "Quote of the Day",
+    description: "Display inspiring quotes",
+    icon: "quote",
+    defaultSettings: {
+      autoRotate: true,
+      rotateInterval: 86400000,
+    },
+  },
+}
+
+export function createDefaultWidget(type: WidgetType, order: number = 0): WidgetConfig {
+  const metadata = WIDGET_REGISTRY[type]
+  const baseId = `${type}-${Date.now()}`
+
+  switch (type) {
+    case "weather":
+      return {
+        id: baseId,
+        type: "weather",
+        enabled: true,
+        order,
+        settings: metadata.defaultSettings as WeatherWidgetConfig["settings"],
+      }
+    case "notes":
+      return {
+        id: baseId,
+        type: "notes",
+        enabled: true,
+        order,
+        settings: metadata.defaultSettings as NotesWidgetConfig["settings"],
+      }
+    case "quote":
+      return {
+        id: baseId,
+        type: "quote",
+        enabled: true,
+        order,
+        settings: metadata.defaultSettings as QuoteWidgetConfig["settings"],
+      }
+  }
+}
+
+export function getEnabledWidgets(widgets: WidgetConfig[]): WidgetConfig[] {
+  return widgets
+    .filter((w) => w.enabled)
+    .sort((a, b) => a.order - b.order)
+}
+
+export function reorderWidgets(
+  widgets: WidgetConfig[],
+  sourceId: string,
+  destinationIndex: number
+): WidgetConfig[] {
+  const sourceIndex = widgets.findIndex((w) => w.id === sourceId)
+  if (sourceIndex === -1) return widgets
+
+  const reordered = [...widgets]
+  const [removed] = reordered.splice(sourceIndex, 1)
+  reordered.splice(destinationIndex, 0, removed)
+
+  return reordered.map((widget, index) => ({
+    ...widget,
+    order: index,
+  }))
+}
+
+export function toggleWidget(widgets: WidgetConfig[], id: string): WidgetConfig[] {
+  return widgets.map((widget) =>
+    widget.id === id ? { ...widget, enabled: !widget.enabled } : widget
+  )
+}
+
+export function updateWidgetSettings(
+  widgets: WidgetConfig[],
+  id: string,
+  settings: Record<string, any>
+): WidgetConfig[] {
+  return widgets.map((widget) => {
+    if (widget.id !== id) return widget
+
+    // Type-safe update based on widget type
+    switch (widget.type) {
+      case "weather":
+        return {
+          ...widget,
+          settings: { ...widget.settings, ...settings },
+        } as WeatherWidgetConfig
+      case "notes":
+        return {
+          ...widget,
+          settings: { ...widget.settings, ...settings },
+        } as NotesWidgetConfig
+      case "quote":
+        return {
+          ...widget,
+          settings: { ...widget.settings, ...settings },
+        } as QuoteWidgetConfig
+      default:
+        return widget
+    }
+  })
+}
+
+export const DEFAULT_WIDGETS: WidgetConfig[] = [
+  {
+    id: "weather-default",
+    type: "weather",
+    enabled: true,
+    order: 0,
+    settings: {},
+  },
+  {
+    id: "notes-default",
+    type: "notes",
+    enabled: true,
+    order: 1,
+    settings: {
+      content: "",
+      maxLength: 500,
+      quickJot: false,
+    },
+  },
+]

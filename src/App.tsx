@@ -3,10 +3,11 @@ import AuroraCanvas from "./components/AuroraCanvas"
 import SearchBar from "./components/SearchBar.tsx"
 import Clock from "./components/Clock"
 import QuickLinks from "./components/QuickLinks.tsx"
-import WeatherWidget from "./components/WeatherWidget.tsx"
+import WidgetContainer from "./components/WidgetContainer"
 import SettingsFab from "./features/settings/components/SettingsFab"
 import ShortcutsDialog from "./components/ShortcutsDialog.tsx"
 import PasswordDialog from "./features/security/components/PasswordDialog"
+import DevModeOverlay from "./components/DevModeOverlay"
 import { Toaster } from "./components/ui/sonner"
 import { PrefsProvider, usePrefs } from "@/lib/prefs"
 import { getShortcuts, matchesShortcut, type ShortcutBinding } from "@/lib/shortcuts"
@@ -95,9 +96,6 @@ function AppBody() {
             case "focusSearch":
               searchBarRef.current?.focus()
               break
-            case "toggleWeather":
-              setPrefs({ ...prefs, showWeather: !prefs.showWeather })
-              break
             case "newChat":
               if (prefs.showChat) {
                 const cleanedConvs = prefs.conversations.filter((c) => c.messages.length > 0)
@@ -174,7 +172,7 @@ function AppBody() {
         </nav>
       )}
 
-      {prefs.showWeather && <WeatherWidget />}
+      <WidgetContainer />
       {prefs.showChat && (
         <Suspense fallback={null}>
           <ChatFab onClick={() => {
@@ -217,6 +215,10 @@ function AppBody() {
       />
 
       <Toaster />
+
+      {/* Dev Mode - only in development and preview, never in production */}
+      {(import.meta.env.DEV || import.meta.env.VITE_VERCEL_ENV === 'preview') &&
+       import.meta.env.VITE_VERCEL_ENV !== 'production' && <DevModeOverlay />}
     </main>
   )
 }

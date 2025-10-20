@@ -91,8 +91,8 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
   },
   quote: {
     type: "quote",
-    name: "Quote of the Day",
-    description: "Display inspiring quotes",
+    name: "Random Quote",
+    description: "Display random inspiring quotes",
     icon: "quote",
     defaultSettings: {
       autoRotate: true,

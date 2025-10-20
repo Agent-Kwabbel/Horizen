@@ -48,8 +48,8 @@ describe('widgets utility functions', () => {
     it('should have correct quote widget metadata', () => {
       expect(WIDGET_REGISTRY.quote).toEqual({
         type: 'quote',
-        name: 'Quote of the Day',
-        description: 'Display inspiring quotes',
+        name: 'Random Quote',
+        description: 'Display random inspiring quotes',
         icon: 'quote',
         defaultSettings: {
           autoRotate: true,

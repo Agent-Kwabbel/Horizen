@@ -208,7 +208,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium">{metadata.name}</div>
+                          <div className="font-medium truncate">{metadata.name}</div>
                           <div className="text-xs text-white/60 truncate">
                             {metadata.description}
                           </div>
@@ -578,7 +578,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                         <Icon className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium">{metadata.name}</div>
+                        <div className="font-medium truncate">{metadata.name}</div>
                         <div className="text-xs text-white/60 truncate">
                           {metadata.description}
                         </div>

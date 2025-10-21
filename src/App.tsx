@@ -172,6 +172,12 @@ function AppBody() {
         </nav>
       )}
 
+      <div className="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none">
+        <p className="text-[10px] text-white/20 select-none">
+          This website is currently under development. Features and design may change.
+        </p>
+      </div>
+
       <WidgetContainer />
       {prefs.showChat && (
         <Suspense fallback={null}>

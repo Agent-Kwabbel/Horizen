@@ -437,7 +437,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                   if (e.key === 'Enter') {
                                     const input = e.currentTarget
                                     const value = input.value.trim()
-                                    if (value && (widget as TickerWidgetConfig).settings.symbols.length < 5) {
+                                    if (value && (widget as TickerWidgetConfig).settings.symbols.length < 10) {
                                       const currentSymbols = (widget as TickerWidgetConfig).settings.symbols
                                       if (!currentSymbols.some(s => s.symbol.toLowerCase() === value.toLowerCase())) {
                                         const displaySymbol = tickerType === "stock" ? value.toUpperCase() : value
@@ -455,7 +455,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 onClick={() => {
                                   const input = document.getElementById(`ticker-symbol-${widget.id}`) as HTMLInputElement
                                   const value = input.value.trim()
-                                  if (value && (widget as TickerWidgetConfig).settings.symbols.length < 5) {
+                                  if (value && (widget as TickerWidgetConfig).settings.symbols.length < 10) {
                                     const currentSymbols = (widget as TickerWidgetConfig).settings.symbols
                                     if (!currentSymbols.some(s => s.symbol.toLowerCase() === value.toLowerCase())) {
                                       const displaySymbol = tickerType === "stock" ? value.toUpperCase() : value
@@ -464,14 +464,14 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                     }
                                   }
                                 }}
-                                disabled={(widget as TickerWidgetConfig).settings.symbols.length >= 5}
+                                disabled={(widget as TickerWidgetConfig).settings.symbols.length >= 10}
                               >
                                 Add
                               </Button>
                             </div>
 
                             <div className="text-xs text-white/50 mb-2">
-                              {(widget as TickerWidgetConfig).settings.symbols.length}/5 symbols
+                              {(widget as TickerWidgetConfig).settings.symbols.length}/10 symbols
                             </div>
 
                             {(widget as TickerWidgetConfig).settings.symbols.length === 0 ? (

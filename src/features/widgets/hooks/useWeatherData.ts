@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import type { WeatherUnits } from "@/lib/prefs"
 import type { Coordinates } from "../services/geocoding"
 import {
-  type CurrentWeather,
+  type WeatherData,
   createCacheKey,
   getCachedWeather,
   setCachedWeather,
@@ -11,7 +11,7 @@ import {
 } from "../services/weather-api"
 
 export function useWeatherData(coords: Coordinates | null, units: WeatherUnits) {
-  const [weather, setWeather] = useState<CurrentWeather | null>(null)
+  const [weather, setWeather] = useState<WeatherData | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const prevUnitsRef = useRef(units)
 

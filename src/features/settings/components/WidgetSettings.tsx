@@ -246,7 +246,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
 
                           <div>
                             <Label htmlFor={`wind-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
-                              Wind Speed Unit
+                              Wind Speed/Force Unit
                             </Label>
                             <Select
                               value={(widget as WeatherWidgetConfig).settings.units?.windSpeed || "ms"}
@@ -260,6 +260,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 <SelectItem value="kmh">Kilometers per hour (km/h)</SelectItem>
                                 <SelectItem value="mph">Miles per hour (mph)</SelectItem>
                                 <SelectItem value="knots">Knots (kts)</SelectItem>
+                                <SelectItem value="beaufort">Beaufort scale (Bft)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>

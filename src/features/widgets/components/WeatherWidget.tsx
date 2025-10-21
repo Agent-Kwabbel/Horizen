@@ -7,8 +7,11 @@ import { MapPin, RefreshCw } from "lucide-react"
 import type { WeatherWidgetConfig } from "@/lib/widgets"
 import { useWeatherData } from "../hooks/useWeatherData"
 import { useLocationSearch } from "../hooks/useLocationSearch"
+import WeatherIcon from "./WeatherIcon"
 import {
   getWeatherIcon,
+  getWindBeaufortIcon,
+  getPrecipitationIcon,
   formatTemperature,
   formatWindSpeed,
   formatPrecipitation
@@ -44,51 +47,74 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
     <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] py-2">
       <CardContent className="p-4 py-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="text-sm text-white/70 truncate" title={title}>
               {title}
             </div>
 
-            {weather && coords ? (
-              <div className="mt-1 flex items-center gap-2">
-                <div className="text-3xl leading-none mr-2">
-                  {getWeatherIcon(weather.weather_code, weather.is_day)}
+            {weather && weather.current && weather.daily && coords ? (
+              <div className="mt-1">
+                <div className="flex items-center gap-2">
+                  <div className="mr-1">
+                    <WeatherIcon icon={getWeatherIcon(weather.current)} size={56} />
+                  </div>
+
+                  <div className="leading-tight">
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-2xl sm:text-[1.6rem] font-semibold tabular-nums">
+                        {formatTemperature(weather.current.temperature_2m, units.temperature)}
+                      </div>
+                      <div className="text-sm text-white/70 whitespace-nowrap tabular-nums">
+                        Feels&nbsp;{formatTemperature(weather.current.apparent_temperature, units.temperature)}
+                      </div>
+                    </div>
+
+                    <div className="mt-0.5 text-xs text-white/70 tabular-nums">
+                      H: {formatTemperature(weather.daily.temperature_2m_max, units.temperature)} · L: {formatTemperature(weather.daily.temperature_2m_min, units.temperature)}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="leading-tight">
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-2xl sm:text-[1.6rem] font-semibold tabular-nums">
-                      {formatTemperature(weather.temperature_2m, units.temperature)}
-                    </div>
-                    <div className="text-sm text-white/70 whitespace-nowrap tabular-nums">
-                      Feels&nbsp;{formatTemperature(weather.apparent_temperature, units.temperature)}
-                    </div>
-                  </div>
-
-                  <div className="mt-1 text-xs text-white/70 tabular-nums">
-                    💨 {formatWindSpeed(weather.wind_speed_10m, units.windSpeed)} · 🌧️ {formatPrecipitation(weather.precipitation_probability, weather.precipitation, units.precipitation)}
-                  </div>
+                <div className="mt-2 text-xs text-white/70 tabular-nums flex items-center">
+                  <span className="inline-flex items-center gap-1.5">
+                    <WeatherIcon icon={getWindBeaufortIcon(weather.current.wind_speed_10m, units.windSpeed)} size={16} />
+                    {formatWindSpeed(weather.current.wind_speed_10m, units.windSpeed)}
+                  </span>
+                  <span className="mx-2">·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <WeatherIcon icon={getPrecipitationIcon(weather.current)} size={16} />
+                    {formatPrecipitation(weather.current.precipitation_probability, weather.current.precipitation, units.precipitation)}
+                  </span>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 mt-1">
-                <Skeleton className="h-8 w-8 rounded-full bg-white/10" />
-                <div className="space-y-1">
-                  <Skeleton className="h-4 w-28 bg-white/10" />
-                  <Skeleton className="h-3 w-36 bg-white/10" />
+              <div className="mt-1">
+                <div className="flex items-center gap-2">
+                  <div className="mr-1">
+                    <Skeleton className="h-14 w-14 rounded-full bg-white/10" />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-baseline gap-2">
+                      <Skeleton className="h-7 w-16 rounded bg-white/10" />
+                      <Skeleton className="h-4 flex-1 rounded bg-white/10" />
+                    </div>
+                    <Skeleton className="h-3 w-full rounded bg-white/10" />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Skeleton className="h-4 w-full rounded bg-white/10" />
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex flex-col items-end justify-center gap-2 shrink-0 self-stretch">
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
               title="Refresh"
-              onClick={refresh}
-              disabled={!coords}
+              onClick={coords ? refresh : undefined}
             >
               <RefreshCw className="w-4 h-4" />
             </Button>

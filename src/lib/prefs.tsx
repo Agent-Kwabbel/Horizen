@@ -39,7 +39,7 @@ export type ChatConversation = {
 
 export type WeatherUnits = {
   temperature: "celsius" | "fahrenheit" | "kelvin"
-  windSpeed: "ms" | "kmh" | "mph" | "knots"
+  windSpeed: "ms" | "kmh" | "mph" | "knots" | "beaufort"
   precipitation: "mm" | "inch"
 }
 

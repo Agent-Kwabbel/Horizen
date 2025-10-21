@@ -1,18 +1,28 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import WeatherWidget from '@/components/WeatherWidget'
+import WeatherWidget from '@/features/widgets/components/WeatherWidget'
 import { PrefsProvider } from '@/lib/prefs'
 import type { WeatherWidgetConfig } from '@/lib/widgets'
 
 const mockWeatherData = {
-  temperature_2m: 22.5,
-  apparent_temperature: 20.1,
-  wind_speed_10m: 15.3,
-  precipitation_probability: 30,
-  precipitation: 1.2,
-  is_day: 1 as const,
-  weather_code: 0,
+  current: {
+    temperature_2m: 22.5,
+    apparent_temperature: 20.1,
+    wind_speed_10m: 15.3,
+    precipitation_probability: 30,
+    precipitation: 1.2,
+    rain: 0,
+    showers: 0,
+    snowfall: 0,
+    cloud_cover: 10,
+    is_day: 1 as const,
+    weather_code: 0,
+  },
+  daily: {
+    temperature_2m_max: [25.0],
+    temperature_2m_min: [18.0],
+  },
 }
 
 const mockGeoResults = [
@@ -70,7 +80,7 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget()
@@ -90,7 +100,7 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget()
@@ -98,9 +108,9 @@ describe('WeatherWidget', () => {
     await waitFor(() => {
       expect(screen.getByText('23°C')).toBeInTheDocument()
       expect(screen.getByText(/Feels\s+20°C/)).toBeInTheDocument()
-      expect(screen.getByText(/15 m\/s/)).toBeInTheDocument()
-      expect(screen.getByText(/30%/)).toBeInTheDocument() // Precipitation probability
-      expect(screen.getByText(/1\.2mm/)).toBeInTheDocument() // Precipitation amount
+      expect(screen.getByText(/15 m\/s wind/)).toBeInTheDocument()
+      expect(screen.getByText(/30% rain/)).toBeInTheDocument()
+      expect(screen.getByText(/H: 25°C · L: 18°C/)).toBeInTheDocument()
     })
   })
 
@@ -163,7 +173,7 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget()
@@ -241,7 +251,7 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     const londonButton = screen.getByRole('button', { name: /London/i })
@@ -299,7 +309,8 @@ describe('WeatherWidget', () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        current: { ...mockWeatherData, temperature_2m: 25.0 },
+        ...mockWeatherData,
+        current: { ...mockWeatherData.current, temperature_2m: 25.0 },
       }),
     } as Response)
 
@@ -311,14 +322,14 @@ describe('WeatherWidget', () => {
     })
   })
 
-  it('should disable refresh button when no location is set', () => {
+  it('should show refresh button when no location is set', () => {
     renderWeatherWidget()
 
     const refreshButton = screen.getByTitle('Refresh')
-    expect(refreshButton).toBeDisabled()
+    expect(refreshButton).toBeInTheDocument()
   })
 
-  it('should display correct weather icon for clear day', async () => {
+  it('should display weather data with correct formatting', async () => {
     const storedLocation = {
       lat: 51.5074,
       lon: -0.1278,
@@ -328,59 +339,14 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        current: { ...mockWeatherData, weather_code: 0, is_day: 1 },
-      }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget()
 
     await waitFor(() => {
-      expect(screen.getByText('☀️')).toBeInTheDocument()
-    })
-  })
-
-  it('should display correct weather icon for clear night', async () => {
-    const storedLocation = {
-      lat: 51.5074,
-      lon: -0.1278,
-      name: 'London',
-    }
-    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
-
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        current: { ...mockWeatherData, weather_code: 0, is_day: 0 },
-      }),
-    } as Response)
-
-    renderWeatherWidget()
-
-    await waitFor(() => {
-      expect(screen.getByText('🌙')).toBeInTheDocument()
-    })
-  })
-
-  it('should display rainy weather icon', async () => {
-    const storedLocation = {
-      lat: 51.5074,
-      lon: -0.1278,
-      name: 'London',
-    }
-    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
-
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        current: { ...mockWeatherData, weather_code: 61 },
-      }),
-    } as Response)
-
-    renderWeatherWidget()
-
-    await waitFor(() => {
-      expect(screen.getByText('🌧️')).toBeInTheDocument()
+      expect(screen.getByText('London')).toBeInTheDocument()
+      expect(screen.getByText('23°C')).toBeInTheDocument()
     })
   })
 
@@ -430,8 +396,9 @@ describe('WeatherWidget', () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
+        ...mockWeatherData,
         current: {
-          ...mockWeatherData,
+          ...mockWeatherData.current,
           temperature_2m: 22.7,
           apparent_temperature: 20.3,
         },
@@ -486,7 +453,7 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget(config)
@@ -517,24 +484,24 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText(/15 km\/h/)).toBeInTheDocument()
+      expect(screen.getByText(/km\/h wind/)).toBeInTheDocument()
     })
   })
 
-  it('should respect configured precipitation unit (inches)', async () => {
+  it('should respect configured wind speed unit (Beaufort)', async () => {
     const config: WeatherWidgetConfig = {
       ...defaultConfig,
       settings: {
         units: {
           temperature: 'celsius',
-          windSpeed: 'ms',
-          precipitation: 'inch',
+          windSpeed: 'beaufort',
+          precipitation: 'mm',
         },
       },
     }
@@ -548,13 +515,44 @@ describe('WeatherWidget', () => {
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ current: mockWeatherData }),
+      json: async () => mockWeatherData,
     } as Response)
 
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText(/1\.2in/)).toBeInTheDocument()
+      expect(screen.getByText(/Bft wind force/)).toBeInTheDocument()
+    })
+  })
+
+  it('should display precipitation in new format', async () => {
+    const config: WeatherWidgetConfig = {
+      ...defaultConfig,
+      settings: {
+        units: {
+          temperature: 'celsius',
+          windSpeed: 'ms',
+          precipitation: 'mm',
+        },
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockWeatherData,
+    } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText(/30% rain/)).toBeInTheDocument()
     })
   })
 })

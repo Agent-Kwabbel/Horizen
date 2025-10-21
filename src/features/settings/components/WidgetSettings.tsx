@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, TickerSymbol } from "@/lib/widgets"
-import { WIDGET_REGISTRY, createDefaultWidget, reorderWidgets, updateWidgetSettings } from "@/lib/widgets"
+import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, TickerSymbol, UnitSystem } from "@/lib/widgets"
+import { WIDGET_REGISTRY, createDefaultWidget, reorderWidgets, updateWidgetSettings, getUnitsForSystem, detectUnitSystem } from "@/lib/widgets"
 import {
   Sheet,
   SheetContent,
@@ -68,27 +68,38 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
     }))
   }
 
+  const handleUnitSystemChange = (widgetId: string, system: UnitSystem) => {
+    const newUnits = getUnitsForSystem(system)
+
+    setPrefs((p) => ({
+      ...p,
+      widgets: updateWidgetSettings(p.widgets, widgetId, {
+        unitSystem: system,
+        units: newUnits,
+      }),
+    }))
+  }
+
   const handleWeatherUnitsChange = (
     widgetId: string,
-    field: "temperature" | "windSpeed" | "precipitation",
+    field: "temperature" | "windSpeed" | "precipitation" | "visibility" | "pressure",
     value: string
   ) => {
     const widget = prefs.widgets.find((w) => w.id === widgetId)
     if (!widget || widget.type !== "weather") return
 
-    const currentUnits = widget.settings.units || {
-      temperature: "celsius",
-      windSpeed: "ms",
-      precipitation: "mm",
+    const currentUnits = widget.settings.units || getUnitsForSystem("metric")
+
+    const newUnits = {
+      ...currentUnits,
+      [field]: value,
     }
 
     setPrefs((p) => ({
       ...p,
       widgets: updateWidgetSettings(p.widgets, widgetId, {
-        units: {
-          ...currentUnits,
-          [field]: value,
-        },
+        unitSystem: "custom",
+        units: newUnits,
       }),
     }))
   }
@@ -260,62 +271,125 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                       {isExpanded && widget.type === "weather" && (
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div>
-                            <Label htmlFor={`temp-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
-                              Temperature Unit
+                            <Label htmlFor={`unit-system-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              Unit System
                             </Label>
                             <Select
-                              value={(widget as WeatherWidgetConfig).settings.units?.temperature || "celsius"}
-                              onValueChange={(v) => handleWeatherUnitsChange(widget.id, "temperature", v)}
+                              value={(widget as WeatherWidgetConfig).settings.unitSystem || detectUnitSystem((widget as WeatherWidgetConfig).settings.units)}
+                              onValueChange={(v) => handleUnitSystemChange(widget.id, v as UnitSystem)}
                             >
-                              <SelectTrigger id={`temp-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                              <SelectTrigger id={`unit-system-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="bg-black/90 text-white border-white/10">
-                                <SelectItem value="celsius">Celsius (°C)</SelectItem>
-                                <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
-                                <SelectItem value="kelvin">Kelvin (K)</SelectItem>
+                                <SelectItem value="metric">Metric (°C, km/h, mm, km, hPa)</SelectItem>
+                                <SelectItem value="imperial">Imperial (°F, mph, in, mi, inHg)</SelectItem>
+                                <SelectItem value="scientific">Scientific (K, m/s, mm, m, hPa)</SelectItem>
+                                <SelectItem value="custom">Custom</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
-                          <div>
-                            <Label htmlFor={`wind-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
-                              Wind Speed/Force Unit
-                            </Label>
-                            <Select
-                              value={(widget as WeatherWidgetConfig).settings.units?.windSpeed || "ms"}
-                              onValueChange={(v) => handleWeatherUnitsChange(widget.id, "windSpeed", v)}
-                            >
-                              <SelectTrigger id={`wind-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-black/90 text-white border-white/10">
-                                <SelectItem value="ms">Meters per second (m/s)</SelectItem>
-                                <SelectItem value="kmh">Kilometers per hour (km/h)</SelectItem>
-                                <SelectItem value="mph">Miles per hour (mph)</SelectItem>
-                                <SelectItem value="knots">Knots (kts)</SelectItem>
-                                <SelectItem value="beaufort">Beaufort scale (Bft)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          {((widget as WeatherWidgetConfig).settings.unitSystem || detectUnitSystem((widget as WeatherWidgetConfig).settings.units)) === "custom" && (
+                            <>
+                              <div>
+                                <Label htmlFor={`temp-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                  Temperature
+                                </Label>
+                                <Select
+                                  value={(widget as WeatherWidgetConfig).settings.units?.temperature || "celsius"}
+                                  onValueChange={(v) => handleWeatherUnitsChange(widget.id, "temperature", v)}
+                                >
+                                  <SelectTrigger id={`temp-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-black/90 text-white border-white/10">
+                                    <SelectItem value="celsius">Celsius (°C)</SelectItem>
+                                    <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
+                                    <SelectItem value="kelvin">Kelvin (K)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
-                          <div>
-                            <Label htmlFor={`precip-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
-                              Precipitation Unit
-                            </Label>
-                            <Select
-                              value={(widget as WeatherWidgetConfig).settings.units?.precipitation || "mm"}
-                              onValueChange={(v) => handleWeatherUnitsChange(widget.id, "precipitation", v)}
-                            >
-                              <SelectTrigger id={`precip-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-black/90 text-white border-white/10">
-                                <SelectItem value="mm">Millimeters (mm)</SelectItem>
-                                <SelectItem value="inch">Inches (in)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                              <div>
+                                <Label htmlFor={`wind-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                  Wind Speed/Force
+                                </Label>
+                                <Select
+                                  value={(widget as WeatherWidgetConfig).settings.units?.windSpeed || "kmh"}
+                                  onValueChange={(v) => handleWeatherUnitsChange(widget.id, "windSpeed", v)}
+                                >
+                                  <SelectTrigger id={`wind-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-black/90 text-white border-white/10">
+                                    <SelectItem value="kmh">Kilometers per hour (km/h)</SelectItem>
+                                    <SelectItem value="mph">Miles per hour (mph)</SelectItem>
+                                    <SelectItem value="ms">Meters per second (m/s)</SelectItem>
+                                    <SelectItem value="knots">Knots (kts)</SelectItem>
+                                    <SelectItem value="beaufort">Beaufort scale (Bft)</SelectItem>
+                                    <SelectItem value="fts">Feet per second (ft/s)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label htmlFor={`precip-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                  Precipitation
+                                </Label>
+                                <Select
+                                  value={(widget as WeatherWidgetConfig).settings.units?.precipitation || "mm"}
+                                  onValueChange={(v) => handleWeatherUnitsChange(widget.id, "precipitation", v)}
+                                >
+                                  <SelectTrigger id={`precip-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-black/90 text-white border-white/10">
+                                    <SelectItem value="mm">Millimeters (mm)</SelectItem>
+                                    <SelectItem value="inch">Inches (")</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label htmlFor={`visibility-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                  Visibility
+                                </Label>
+                                <Select
+                                  value={(widget as WeatherWidgetConfig).settings.units?.visibility || "km"}
+                                  onValueChange={(v) => handleWeatherUnitsChange(widget.id, "visibility", v)}
+                                >
+                                  <SelectTrigger id={`visibility-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-black/90 text-white border-white/10">
+                                    <SelectItem value="km">Kilometers (km/m)</SelectItem>
+                                    <SelectItem value="miles">Miles (mi)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label htmlFor={`pressure-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                  Pressure
+                                </Label>
+                                <Select
+                                  value={(widget as WeatherWidgetConfig).settings.units?.pressure || "hpa"}
+                                  onValueChange={(v) => handleWeatherUnitsChange(widget.id, "pressure", v)}
+                                >
+                                  <SelectTrigger id={`pressure-unit-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-black/90 text-white border-white/10">
+                                    <SelectItem value="hpa">Hectopascals (hPa)</SelectItem>
+                                    <SelectItem value="mb">Millibars (mb)</SelectItem>
+                                    <SelectItem value="inhg">Inches of mercury (inHg)</SelectItem>
+                                    <SelectItem value="atm">Atmospheres (atm)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
 
                           <div>
                             <div className="flex items-center gap-2 mb-2">

@@ -13,25 +13,14 @@ import {
 export function useWeatherData(coords: Coordinates | null, units: WeatherUnits) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const prevUnitsRef = useRef(units)
 
   useEffect(() => {
     const run = async () => {
       if (!coords) return
       const key = createCacheKey(coords.lat, coords.lon)
 
-      const unitsChanged = prevUnitsRef.current !== units &&
-        (prevUnitsRef.current.temperature !== units.temperature ||
-         prevUnitsRef.current.windSpeed !== units.windSpeed ||
-         prevUnitsRef.current.precipitation !== units.precipitation)
-
-      if (unitsChanged) {
-        clearWeatherCache(key)
-      }
-
-      prevUnitsRef.current = units
-
-      if (!unitsChanged && refreshTrigger === 0) {
+      // Try cache first (only skip cache if manual refresh)
+      if (refreshTrigger === 0) {
         const cached = getCachedWeather(key)
         if (cached) {
           setWeather(cached)
@@ -39,14 +28,15 @@ export function useWeatherData(coords: Coordinates | null, units: WeatherUnits) 
         }
       }
 
-      const data = await fetchCurrentWeather(coords.lat, coords.lon, units).catch(() => null)
+      // Fetch weather data (always in standard units: °C, m/s, mm, meters, hPa)
+      const data = await fetchCurrentWeather(coords.lat, coords.lon).catch(() => null)
       if (data) {
         setWeather(data)
         setCachedWeather(key, data)
       }
     }
     run()
-  }, [coords, units, refreshTrigger])
+  }, [coords, refreshTrigger])
 
   const refresh = () => {
     if (!coords) return

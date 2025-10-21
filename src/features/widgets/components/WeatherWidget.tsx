@@ -17,14 +17,18 @@ import {
   formatTemperature,
   formatWindSpeed,
   formatPrecipitation,
-  getOverallAQI
+  getOverallAQI,
+  formatVisibility,
+  formatPressure
 } from "../services/weather-api"
 import { detectWeatherAlerts, filterAlertsByLevel, filterAlertsByType } from "../services/weather-alerts"
 
 const DEFAULT_UNITS = {
   temperature: "celsius" as const,
-  windSpeed: "ms" as const,
+  windSpeed: "kmh" as const,
   precipitation: "mm" as const,
+  visibility: "km" as const,
+  pressure: "hpa" as const,
 }
 
 type WeatherWidgetProps = {
@@ -59,20 +63,44 @@ function getUVIcon(uvIndex: number): string {
   return 'uv-index'
 }
 
-function formatWindSpeedValue(speed: number, unit: WeatherWidgetConfig['settings']['units']): string {
-  const windUnit = unit?.windSpeed || 'ms'
+function formatWindSpeedValue(speedMs: number, units: WeatherWidgetConfig['settings']['units']): string {
+  const windUnit = units?.windSpeed || 'kmh'
 
-  if (windUnit === "beaufort") {
-    return `${Math.round(speed)} Bft`
+  // Convert from m/s to target unit
+  let displaySpeed = speedMs
+  switch (windUnit) {
+    case "kmh": displaySpeed = speedMs * 3.6; break
+    case "mph": displaySpeed = speedMs * 2.237; break
+    case "knots": displaySpeed = speedMs * 1.944; break
+    case "fts": displaySpeed = speedMs * 3.281; break
+    case "beaufort": {
+      // Convert m/s to Beaufort scale (same logic as getWindBeaufortIcon)
+      let beaufort = 0
+      if (speedMs >= 32.7) beaufort = 12
+      else if (speedMs >= 28.5) beaufort = 11
+      else if (speedMs >= 24.5) beaufort = 10
+      else if (speedMs >= 20.8) beaufort = 9
+      else if (speedMs >= 17.2) beaufort = 8
+      else if (speedMs >= 13.9) beaufort = 7
+      else if (speedMs >= 10.8) beaufort = 6
+      else if (speedMs >= 8.0) beaufort = 5
+      else if (speedMs >= 5.5) beaufort = 4
+      else if (speedMs >= 3.4) beaufort = 3
+      else if (speedMs >= 1.6) beaufort = 2
+      else if (speedMs >= 0.5) beaufort = 1
+      return `${beaufort} Bft`
+    }
+    case "ms": break
   }
 
   const unitLabels = {
     ms: "m/s",
     kmh: "km/h",
     mph: "mph",
-    knots: "kts"
+    knots: "kts",
+    fts: "ft/s"
   }
-  return `${Math.round(speed)} ${unitLabels[windUnit as keyof typeof unitLabels]}`
+  return `${Math.round(displaySpeed)} ${unitLabels[windUnit as keyof typeof unitLabels]}`
 }
 
 function formatPrecipitationValue(probability: number): string {
@@ -141,20 +169,6 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
                     </div>
                   </div>
                 </div>
-
-                {!expanded && (
-                  <div className="mt-2 text-xs text-white/70 tabular-nums flex items-center">
-                    <span className="inline-flex items-center gap-1.5">
-                      <WeatherIcon icon={getWindBeaufortIcon(weather.current.wind_speed_10m, units.windSpeed)} size={16} />
-                      {formatWindSpeed(weather.current.wind_speed_10m, units.windSpeed)}
-                    </span>
-                    <span className="mx-2">·</span>
-                    <span className="inline-flex items-center gap-1">
-                      <WeatherIcon icon={getPrecipitationIcon(weather.current)} size={16} />
-                      {formatPrecipitation(weather.current.precipitation_probability, weather.current.precipitation, units.precipitation)}
-                    </span>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="mt-1">
@@ -228,24 +242,33 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
                 </div>
               </PopoverContent>
             </Popover>
-
-            {coords && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-                title={expanded ? "Show less" : "Show more"}
-                onClick={toggleExpanded}
-              >
-                {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </Button>
-            )}
           </div>
         </div>
 
-        {expanded && weather && coords && (
-          <div className="mt-3 pt-3 border-t border-white/20 space-y-2 text-xs">
-            <div className="flex flex-col gap-2">
+        {coords && (
+          <button
+            onClick={toggleExpanded}
+            className="mt-2 flex items-center gap-2 w-full text-white/40 hover:text-white/60 transition-colors group"
+            title={expanded ? "Show less" : "Show more"}
+          >
+            <div className="flex-1 h-px bg-white/20" />
+            <div className="p-1 rounded-full group-hover:bg-white/5 transition-colors">
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+            <div className="flex-1 h-px bg-white/20" />
+          </button>
+        )}
+
+        {coords && weather && (
+          <div
+            className="overflow-hidden transition-all duration-300 ease-in-out"
+            style={{
+              maxHeight: expanded ? '1000px' : '0px',
+              opacity: expanded ? 1 : 0
+            }}
+          >
+            <div className="mt-2 space-y-2 text-xs">
+              <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <WeatherIcon icon={getWindBeaufortIcon(weather.current.wind_speed_10m, units.windSpeed)} size={18} />
                 <span className="text-white/70">Wind Speed/Force</span>
@@ -281,13 +304,13 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
               <div className="flex items-center gap-2">
                 <WeatherIcon icon="mist" size={18} />
                 <span className="text-white/70">Visibility</span>
-                <span className="ml-auto tabular-nums">{(weather.current.visibility / 1000).toFixed(1)} km</span>
+                <span className="ml-auto tabular-nums">{formatVisibility(weather.current.visibility, units.visibility)}</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <WeatherIcon icon="barometer" size={18} />
                 <span className="text-white/70">Pressure</span>
-                <span className="ml-auto tabular-nums">{weather.current.surface_pressure.toFixed(0)} hPa</span>
+                <span className="ml-auto tabular-nums">{formatPressure(weather.current.surface_pressure, units.pressure)}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -318,6 +341,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
                 <span className="ml-auto tabular-nums">{formatTime(weather.daily.sunset)}</span>
               </div>
             </div>
+          </div>
           </div>
         )}
       </CardContent>

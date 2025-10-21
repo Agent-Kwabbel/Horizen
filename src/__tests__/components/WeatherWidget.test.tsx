@@ -5,12 +5,14 @@ import WeatherWidget from '@/features/widgets/components/WeatherWidget'
 import { PrefsProvider } from '@/lib/prefs'
 import type { WeatherWidgetConfig } from '@/lib/widgets'
 
-const mockWeatherData = {
+// Raw API response format (what the Open-Meteo API returns)
+const mockApiResponse = {
   current: {
     temperature_2m: 22.5,
     apparent_temperature: 20.1,
     wind_speed_10m: 15.3,
     wind_gusts_10m: 18.0,
+    wind_direction_10m: 180,
     precipitation_probability: 30,
     precipitation: 1.2,
     rain: 0,
@@ -34,17 +36,40 @@ const mockWeatherData = {
     wind_gusts_10m: Array(30).fill(18),
   },
   daily: {
-    temperature_2m_max: [25.0, 26.0, 24.0],
-    temperature_2m_min: [18.0, 17.0, 19.0],
-    apparent_temperature_max: [23.0, 24.0, 22.0],
-    apparent_temperature_min: [16.0, 15.0, 17.0],
-    precipitation_sum: [2.5, 0, 1.0],
-    precipitation_hours: [2, 0, 1],
-    weather_code: [0, 0, 1],
-    wind_speed_10m_max: [20, 18, 22],
-    wind_gusts_10m_max: [25, 23, 27],
-    uv_index_max: [8, 9, 7],
+    temperature_2m_max: [25.0],
+    temperature_2m_min: [18.0],
+    apparent_temperature_max: [23.0],
+    apparent_temperature_min: [16.0],
+    precipitation_sum: [2.5],
+    precipitation_hours: [2],
+    weather_code: [0],
+    wind_speed_10m_max: [20],
+    wind_gusts_10m_max: [25],
+    uv_index_max: [8],
+    sunrise: ['2024-01-01T07:00:00'],
+    sunset: ['2024-01-01T17:00:00'],
   },
+}
+
+// Processed weather data (what gets stored in cache after fetchCurrentWeather processes it)
+const mockWeatherData = {
+  current: mockApiResponse.current,
+  hourly: mockApiResponse.hourly,
+  daily: {
+    temperature_2m_max: 25.0,
+    temperature_2m_min: 18.0,
+    apparent_temperature_max: 23.0,
+    apparent_temperature_min: 16.0,
+    precipitation_sum: 2.5,
+    precipitation_hours: 2,
+    weather_code: 0,
+    wind_speed_10m_max: 20,
+    wind_gusts_10m_max: 25,
+    uv_index_max: 8,
+    sunrise: '2024-01-01T07:00:00',
+    sunset: '2024-01-01T17:00:00',
+  },
+  airQuality: null,
   latitude: 51.5074,
   longitude: -0.1278,
 }
@@ -102,10 +127,15 @@ describe('WeatherWidget', () => {
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget()
 
@@ -121,22 +151,30 @@ describe('WeatherWidget', () => {
       name: 'London, England, United Kingdom',
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget()
 
     await waitFor(() => {
       expect(screen.getByText('23°C')).toBeInTheDocument()
       expect(screen.getByText(/Feels\s+20°C/)).toBeInTheDocument()
-      expect(screen.getByText(/15 m\/s wind/)).toBeInTheDocument()
-      expect(screen.getByText(/30% rain/)).toBeInTheDocument()
       expect(screen.getByText(/H: 25°C/)).toBeInTheDocument()
       expect(screen.getByText(/L: 18°C/)).toBeInTheDocument()
     })
+
+    // Check for expanded section data (wind speed defaults to km/h)
+    expect(screen.getByText(/55.*km\/h/i)).toBeInTheDocument()
+    expect(screen.getByText(/30%/)).toBeInTheDocument()
   })
 
   it('should display loading skeleton while fetching', () => {
@@ -196,10 +234,15 @@ describe('WeatherWidget', () => {
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
     localStorage.setItem(cacheKey, JSON.stringify(expiredData))
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget()
 
@@ -274,10 +317,15 @@ describe('WeatherWidget', () => {
       expect(screen.getByText('London')).toBeInTheDocument()
     })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     const londonButton = screen.getByRole('button', { name: /London/i })
     await user.click(londonButton)
@@ -331,13 +379,18 @@ describe('WeatherWidget', () => {
       expect(screen.getByText('23°C')).toBeInTheDocument()
     })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...mockWeatherData,
-        current: { ...mockWeatherData.current, temperature_2m: 25.0 },
-      }),
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...mockApiResponse,
+          current: { ...mockApiResponse.current, temperature_2m: 25.0 },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     const refreshButton = screen.getByTitle('Refresh')
     await user.click(refreshButton)
@@ -362,10 +415,15 @@ describe('WeatherWidget', () => {
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget()
 
@@ -418,17 +476,22 @@ describe('WeatherWidget', () => {
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...mockWeatherData,
-        current: {
-          ...mockWeatherData.current,
-          temperature_2m: 22.7,
-          apparent_temperature: 20.3,
-        },
-      }),
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...mockApiResponse,
+          current: {
+            ...mockApiResponse.current,
+            temperature_2m: 22.7,
+            apparent_temperature: 20.3,
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget()
 
@@ -476,15 +539,21 @@ describe('WeatherWidget', () => {
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText('23°F')).toBeInTheDocument()
+      // 22.5°C = 72.5°F ≈ 73°F when rounded
+      expect(screen.getByText('73°F')).toBeInTheDocument()
     })
   })
 
@@ -506,16 +575,23 @@ describe('WeatherWidget', () => {
       name: 'London',
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText(/km\/h wind/)).toBeInTheDocument()
+      // 15.3 m/s × 3.6 = 55 km/h
+      expect(screen.getByText(/55.*km\/h/i)).toBeInTheDocument()
     })
   })
 
@@ -537,16 +613,23 @@ describe('WeatherWidget', () => {
       name: 'London',
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText(/Bft wind force/)).toBeInTheDocument()
+      // 15.3 m/s = Beaufort 7
+      expect(screen.getByText(/7\s*Bft/i)).toBeInTheDocument()
     })
   })
 
@@ -568,16 +651,22 @@ describe('WeatherWidget', () => {
       name: 'London',
     }
     localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockWeatherData,
-    } as Response)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText(/30% rain/)).toBeInTheDocument()
+      expect(screen.getByText(/30%/)).toBeInTheDocument()
     })
   })
 })

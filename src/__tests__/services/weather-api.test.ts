@@ -22,42 +22,52 @@ describe('weather-api', () => {
   })
 
   describe('formatTemperature', () => {
-    it('should format celsius temperature', () => {
+    it('should format celsius temperature (input is always celsius)', () => {
       expect(formatTemperature(22.5, 'celsius')).toBe('23°C')
       expect(formatTemperature(22.4, 'celsius')).toBe('22°C')
       expect(formatTemperature(-5.5, 'celsius')).toBe('-5°C')
     })
 
-    it('should format fahrenheit temperature', () => {
-      expect(formatTemperature(72.5, 'fahrenheit')).toBe('73°F')
-      expect(formatTemperature(32.0, 'fahrenheit')).toBe('32°F')
+    it('should convert celsius to fahrenheit for display', () => {
+      expect(formatTemperature(22, 'fahrenheit')).toBe('72°F') // 22°C = 71.6°F ≈ 72°F
+      expect(formatTemperature(0, 'fahrenheit')).toBe('32°F')
+      expect(formatTemperature(100, 'fahrenheit')).toBe('212°F')
     })
 
-    it('should format kelvin temperature', () => {
-      expect(formatTemperature(295.5, 'kelvin')).toBe('296K')
-      expect(formatTemperature(273.15, 'kelvin')).toBe('273K')
+    it('should convert celsius to kelvin for display', () => {
+      expect(formatTemperature(22, 'kelvin')).toBe('295K') // 22°C + 273.15 = 295.15K ≈ 295K
+      expect(formatTemperature(0, 'kelvin')).toBe('273K')
+      expect(formatTemperature(-273.15, 'kelvin')).toBe('0K')
     })
   })
 
   describe('formatWindSpeed', () => {
-    it('should format m/s with "wind" suffix', () => {
+    it('should format m/s with "wind" suffix (input is always m/s)', () => {
       expect(formatWindSpeed(15.3, 'ms')).toBe('15 m/s wind')
       expect(formatWindSpeed(5.7, 'ms')).toBe('6 m/s wind')
     })
 
-    it('should format km/h with "wind" suffix', () => {
-      expect(formatWindSpeed(55.0, 'kmh')).toBe('55 km/h wind')
+    it('should convert m/s to km/h for display', () => {
+      expect(formatWindSpeed(10, 'kmh')).toBe('36 km/h wind') // 10 m/s × 3.6 = 36 km/h
+      expect(formatWindSpeed(5, 'kmh')).toBe('18 km/h wind')
     })
 
-    it('should format mph with "wind" suffix', () => {
-      expect(formatWindSpeed(34.2, 'mph')).toBe('34 mph wind')
+    it('should convert m/s to mph for display', () => {
+      expect(formatWindSpeed(10, 'mph')).toBe('22 mph wind') // 10 m/s × 2.237 ≈ 22 mph
+      expect(formatWindSpeed(5, 'mph')).toBe('11 mph wind')
     })
 
-    it('should format knots with "wind" suffix', () => {
-      expect(formatWindSpeed(20.5, 'knots')).toBe('21 kts wind')
+    it('should convert m/s to knots for display', () => {
+      expect(formatWindSpeed(10, 'knots')).toBe('19 kts wind') // 10 m/s × 1.944 ≈ 19 knots
+      expect(formatWindSpeed(5, 'knots')).toBe('10 kts wind')
     })
 
-    it('should format Beaufort scale with "wind force" suffix', () => {
+    it('should convert m/s to ft/s for display', () => {
+      expect(formatWindSpeed(10, 'fts')).toBe('33 ft/s wind') // 10 m/s × 3.281 ≈ 33 ft/s
+      expect(formatWindSpeed(5, 'fts')).toBe('16 ft/s wind')
+    })
+
+    it('should convert m/s to Beaufort scale for display', () => {
       expect(formatWindSpeed(0.3, 'beaufort')).toBe('0 Bft wind force') // Calm
       expect(formatWindSpeed(5.0, 'beaufort')).toBe('3 Bft wind force') // Gentle breeze
       expect(formatWindSpeed(35.0, 'beaufort')).toBe('12 Bft wind force') // Hurricane
@@ -65,19 +75,20 @@ describe('weather-api', () => {
   })
 
   describe('formatPrecipitation', () => {
-    it('should format precipitation probability as "xx% rain"', () => {
-      expect(formatPrecipitation(30, 1.2, 'mm')).toBe('30% rain')
-      expect(formatPrecipitation(75, 5.0, 'mm')).toBe('75% rain')
-      expect(formatPrecipitation(0, 0, 'mm')).toBe('0% rain')
+    it('should format precipitation with probability and amount in mm', () => {
+      expect(formatPrecipitation(30, 1.2, 'mm')).toBe('30% rain, 1.2mm')
+      expect(formatPrecipitation(75, 5.0, 'mm')).toBe('75% rain, 5.0mm')
+      expect(formatPrecipitation(0, 0, 'mm')).toBe('0% rain, 0.0mm')
+    })
+
+    it('should convert mm to inches for display', () => {
+      expect(formatPrecipitation(50, 25.4, 'inch')).toBe('50% rain, 1.0"') // 25.4mm = 1 inch
+      expect(formatPrecipitation(75, 50.8, 'inch')).toBe('75% rain, 2.0"') // 50.8mm = 2 inches
     })
 
     it('should handle null/undefined probability', () => {
-      expect(formatPrecipitation(null as any, 0, 'mm')).toBe('0% rain')
-      expect(formatPrecipitation(undefined as any, 0, 'mm')).toBe('0% rain')
-    })
-
-    it('should ignore amount and unit parameters', () => {
-      expect(formatPrecipitation(50, 10.5, 'inch')).toBe('50% rain')
+      expect(formatPrecipitation(null as any, 0, 'mm')).toBe('0% rain, 0.0mm')
+      expect(formatPrecipitation(undefined as any, 0, 'mm')).toBe('0% rain, 0.0mm')
     })
   })
 
@@ -189,35 +200,23 @@ describe('weather-api', () => {
   })
 
   describe('getWindBeaufortIcon', () => {
-    it('should return correct Beaufort icon for m/s', () => {
+    it('should convert m/s to correct Beaufort icon (input always in m/s)', () => {
       expect(getWindBeaufortIcon(0.3, 'ms')).toBe('wind-beaufort-0') // Calm
       expect(getWindBeaufortIcon(1.5, 'ms')).toBe('wind-beaufort-1') // Light air
       expect(getWindBeaufortIcon(3.0, 'ms')).toBe('wind-beaufort-2') // Light breeze
       expect(getWindBeaufortIcon(5.0, 'ms')).toBe('wind-beaufort-3') // Gentle breeze
       expect(getWindBeaufortIcon(10.0, 'ms')).toBe('wind-beaufort-5') // Fresh breeze
+      expect(getWindBeaufortIcon(15.3, 'ms')).toBe('wind-beaufort-7') // Near gale
       expect(getWindBeaufortIcon(30.0, 'ms')).toBe('wind-beaufort-11') // Violent storm
       expect(getWindBeaufortIcon(35.0, 'ms')).toBe('wind-beaufort-12') // Hurricane
     })
 
-    it('should convert km/h to m/s for Beaufort scale', () => {
-      expect(getWindBeaufortIcon(18.0, 'kmh')).toBe('wind-beaufort-3') // 18/3.6 = 5 m/s = Gentle breeze
-      expect(getWindBeaufortIcon(36.0, 'kmh')).toBe('wind-beaufort-5') // 36/3.6 = 10 m/s = Fresh breeze
-    })
-
-    it('should convert mph to m/s for Beaufort scale', () => {
-      expect(getWindBeaufortIcon(11.2, 'mph')).toBe('wind-beaufort-3') // 11.2/2.237 = 5 m/s = Gentle breeze
-      expect(getWindBeaufortIcon(22.4, 'mph')).toBe('wind-beaufort-5') // 22.4/2.237 = 10 m/s = Fresh breeze
-    })
-
-    it('should convert knots to m/s for Beaufort scale', () => {
-      expect(getWindBeaufortIcon(9.7, 'knots')).toBe('wind-beaufort-3') // 9.7/1.944 = 5 m/s = Gentle breeze
-      expect(getWindBeaufortIcon(19.4, 'knots')).toBe('wind-beaufort-5') // 19.4/1.944 = 10 m/s = Fresh breeze
-    })
-
-    it('should use Beaufort value directly when unit is beaufort', () => {
-      expect(getWindBeaufortIcon(0, 'beaufort')).toBe('wind-beaufort-0')
-      expect(getWindBeaufortIcon(6, 'beaufort')).toBe('wind-beaufort-6')
-      expect(getWindBeaufortIcon(12, 'beaufort')).toBe('wind-beaufort-12')
+    it('should work regardless of unit parameter (input is always m/s)', () => {
+      // The unit parameter doesn't affect the calculation anymore - input is always m/s
+      expect(getWindBeaufortIcon(5.0, 'kmh')).toBe('wind-beaufort-3')
+      expect(getWindBeaufortIcon(5.0, 'mph')).toBe('wind-beaufort-3')
+      expect(getWindBeaufortIcon(5.0, 'beaufort')).toBe('wind-beaufort-3')
+      expect(getWindBeaufortIcon(15.3, 'beaufort')).toBe('wind-beaufort-7')
     })
   })
 
@@ -673,13 +672,14 @@ describe('weather-api', () => {
       global.fetch = vi.fn()
     })
 
-    it('should fetch weather data with correct parameters', async () => {
+    it('should fetch weather data in standard units (Celsius, m/s, mm)', async () => {
       const mockResponse = {
         current: {
           temperature_2m: 22,
           apparent_temperature: 20,
           wind_speed_10m: 10,
           wind_gusts_10m: 14,
+          wind_direction_10m: 180,
           precipitation_probability: 30,
           precipitation: 1,
           rain: 1,
@@ -693,14 +693,14 @@ describe('weather-api', () => {
           surface_pressure: 1015,
         },
         hourly: {
-          temperature_2m: [22],
-          apparent_temperature: [20],
-          precipitation_probability: [30],
-          precipitation: [1],
-          weather_code: [0],
-          uv_index: [6],
-          wind_speed_10m: [10],
-          wind_gusts_10m: [14],
+          temperature_2m: [22, 23, 24],
+          apparent_temperature: [20, 21, 22],
+          precipitation_probability: [30, 35, 40],
+          precipitation: [1, 1.5, 2],
+          weather_code: [0, 1, 2],
+          uv_index: [6, 7, 6],
+          wind_speed_10m: [10, 11, 12],
+          wind_gusts_10m: [14, 15, 16],
         },
         daily: {
           temperature_2m_max: [25],
@@ -713,9 +713,9 @@ describe('weather-api', () => {
           wind_speed_10m_max: [15],
           wind_gusts_10m_max: [20],
           uv_index_max: [7],
+          sunrise: ['2024-01-01T07:00:00'],
+          sunset: ['2024-01-01T17:00:00'],
         },
-        latitude: 51.5074,
-        longitude: -0.1278,
       }
 
       vi.mocked(global.fetch).mockResolvedValueOnce({
@@ -723,32 +723,49 @@ describe('weather-api', () => {
         json: async () => mockResponse,
       } as Response)
 
-      const units = {
-        temperature: 'celsius' as const,
-        windSpeed: 'ms' as const,
-        precipitation: 'mm' as const,
-      }
+      // Also mock air quality API call
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
 
-      const result = await fetchCurrentWeather(51.5074, -0.1278, units)
+      const result = await fetchCurrentWeather(51.5074, -0.1278)
 
+      // Verify API was called with correct parameters
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('latitude=51.5074')
       )
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('longitude=-0.1278')
       )
-      expect(result.current.temperature_2m).toBe(22)
-      expect(result.daily.temperature_2m_max).toBe(25)
-      expect(result.daily.temperature_2m_min).toBe(18)
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('temperature_unit=celsius')
+      )
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('wind_speed_unit=ms')
+      )
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('precipitation_unit=mm')
+      )
+
+      // Verify data is returned in standard units without conversion
+      expect(result.current.temperature_2m).toBe(22) // Celsius
+      expect(result.current.wind_speed_10m).toBe(10) // m/s
+      expect(result.daily.temperature_2m_max).toBe(25) // Celsius
+      expect(result.daily.temperature_2m_min).toBe(18) // Celsius
+      expect(result.daily.precipitation_sum).toBe(2) // mm
+      expect(result.latitude).toBe(51.5074)
+      expect(result.longitude).toBe(-0.1278)
     })
 
-    it('should convert to Kelvin when requested', async () => {
-      const mockResponse = {
+    it('should fetch and include air quality data when available', async () => {
+      const mockWeatherResponse = {
         current: {
           temperature_2m: 22,
           apparent_temperature: 20,
           wind_speed_10m: 10,
           wind_gusts_10m: 14,
+          wind_direction_10m: 180,
           precipitation_probability: 30,
           precipitation: 1,
           rain: 1,
@@ -782,150 +799,39 @@ describe('weather-api', () => {
           wind_speed_10m_max: [15],
           wind_gusts_10m_max: [20],
           uv_index_max: [7],
+          sunrise: ['2024-01-01T07:00:00'],
+          sunset: ['2024-01-01T17:00:00'],
         },
-        latitude: 51.5074,
-        longitude: -0.1278,
       }
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      } as Response)
-
-      const units = {
-        temperature: 'kelvin' as const,
-        windSpeed: 'ms' as const,
-        precipitation: 'mm' as const,
-      }
-
-      const result = await fetchCurrentWeather(51.5074, -0.1278, units)
-
-      expect(result.current.temperature_2m).toBe(22 + 273.15)
-      expect(result.current.apparent_temperature).toBe(20 + 273.15)
-      expect(result.daily.temperature_2m_max).toBe(25 + 273.15)
-      expect(result.daily.temperature_2m_min).toBe(18 + 273.15)
-    })
-
-    it('should convert to Beaufort scale when requested', async () => {
-      const mockResponse = {
+      const mockAirQualityResponse = {
         current: {
-          temperature_2m: 22,
-          apparent_temperature: 20,
-          wind_speed_10m: 10, // ~5 on Beaufort scale
-          wind_gusts_10m: 14,
-          precipitation_probability: 30,
-          precipitation: 1,
-          rain: 1,
-          showers: 0,
-          snowfall: 0,
-          visibility: 10000,
-          cloud_cover: 40,
-          is_day: 1,
-          weather_code: 0,
-          relative_humidity_2m: 65,
-          surface_pressure: 1015,
+          pm2_5: 35,
+          european_aqi_pm2_5: 50,
+          us_aqi_pm2_5: 100,
+          pm10: 50,
+          european_aqi_pm10: 40,
+          us_aqi_pm10: 80,
+          ozone: 80,
+          european_aqi_o3: 60,
+          us_aqi_o3: 85,
         },
-        hourly: {
-          temperature_2m: [22],
-          apparent_temperature: [20],
-          precipitation_probability: [30],
-          precipitation: [1],
-          weather_code: [0],
-          uv_index: [6],
-          wind_speed_10m: [10],
-          wind_gusts_10m: [14],
-        },
-        daily: {
-          temperature_2m_max: [25],
-          temperature_2m_min: [18],
-          apparent_temperature_max: [23],
-          apparent_temperature_min: [16],
-          precipitation_sum: [2],
-          precipitation_hours: [3],
-          weather_code: [0],
-          wind_speed_10m_max: [15],
-          wind_gusts_10m_max: [20],
-          uv_index_max: [7],
-        },
-        latitude: 51.5074,
-        longitude: -0.1278,
       }
 
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      } as Response)
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockWeatherResponse,
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockAirQualityResponse,
+        } as Response)
 
-      const units = {
-        temperature: 'celsius' as const,
-        windSpeed: 'beaufort' as const,
-        precipitation: 'mm' as const,
-      }
+      const result = await fetchCurrentWeather(51.5074, -0.1278)
 
-      const result = await fetchCurrentWeather(51.5074, -0.1278, units)
-
-      expect(result.current.wind_speed_10m).toBe(5) // Beaufort 5
-    })
-
-    it('should convert to knots when requested', async () => {
-      const mockResponse = {
-        current: {
-          temperature_2m: 22,
-          apparent_temperature: 20,
-          wind_speed_10m: 10, // m/s
-          wind_gusts_10m: 14,
-          precipitation_probability: 30,
-          precipitation: 1,
-          rain: 1,
-          showers: 0,
-          snowfall: 0,
-          visibility: 10000,
-          cloud_cover: 40,
-          is_day: 1,
-          weather_code: 0,
-          relative_humidity_2m: 65,
-          surface_pressure: 1015,
-        },
-        hourly: {
-          temperature_2m: [22],
-          apparent_temperature: [20],
-          precipitation_probability: [30],
-          precipitation: [1],
-          weather_code: [0],
-          uv_index: [6],
-          wind_speed_10m: [10],
-          wind_gusts_10m: [14],
-        },
-        daily: {
-          temperature_2m_max: [25],
-          temperature_2m_min: [18],
-          apparent_temperature_max: [23],
-          apparent_temperature_min: [16],
-          precipitation_sum: [2],
-          precipitation_hours: [3],
-          weather_code: [0],
-          wind_speed_10m_max: [15],
-          wind_gusts_10m_max: [20],
-          uv_index_max: [7],
-        },
-        latitude: 51.5074,
-        longitude: -0.1278,
-      }
-
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      } as Response)
-
-      const units = {
-        temperature: 'celsius' as const,
-        windSpeed: 'knots' as const,
-        precipitation: 'mm' as const,
-      }
-
-      const result = await fetchCurrentWeather(51.5074, -0.1278, units)
-
-      expect(result.current.wind_speed_10m).toBeCloseTo(10 * 0.539957, 2)
+      expect(result.airQuality).toEqual(mockAirQualityResponse.current)
+      expect(result.airQuality?.pm2_5).toBe(35)
     })
   })
 })

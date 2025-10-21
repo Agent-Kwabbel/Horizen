@@ -127,8 +127,7 @@ export function clearWeatherCache(key: string): void {
 
 export async function fetchCurrentWeather(
   lat: number,
-  lon: number,
-  units: WeatherUnits
+  lon: number
 ): Promise<WeatherData> {
   const url = new URL("https://api.open-meteo.com/v1/forecast")
   url.searchParams.set("latitude", String(lat))
@@ -147,13 +146,10 @@ export async function fetchCurrentWeather(
   url.searchParams.set("forecast_hours", "24")
   url.searchParams.set("timezone", "auto")
 
-  url.searchParams.set("temperature_unit", units.temperature === "fahrenheit" ? "fahrenheit" : "celsius")
-
-  // For API, always fetch in m/s and convert later if needed
-  const apiWindUnit = units.windSpeed === "knots" || units.windSpeed === "beaufort" ? "ms" : units.windSpeed
-  url.searchParams.set("wind_speed_unit", apiWindUnit)
-
-  url.searchParams.set("precipitation_unit", units.precipitation)
+  // Always fetch in standard units: Celsius, m/s, mm
+  url.searchParams.set("temperature_unit", "celsius")
+  url.searchParams.set("wind_speed_unit", "ms")
+  url.searchParams.set("precipitation_unit", "mm")
 
   const res = await fetch(url.toString())
   const j = await res.json()
@@ -185,18 +181,7 @@ export async function fetchCurrentWeather(
     sunset: j.daily.sunset[0],
   }
 
-  if (units.temperature === "kelvin") {
-    current.temperature_2m = current.temperature_2m + 273.15
-    current.apparent_temperature = current.apparent_temperature + 273.15
-    daily.temperature_2m_max = daily.temperature_2m_max + 273.15
-    daily.temperature_2m_min = daily.temperature_2m_min + 273.15
-    daily.apparent_temperature_max = daily.apparent_temperature_max + 273.15
-    daily.apparent_temperature_min = daily.apparent_temperature_min + 273.15
-
-    hourly.temperature_2m = hourly.temperature_2m.map(t => t + 273.15)
-    hourly.apparent_temperature = hourly.apparent_temperature.map(t => t + 273.15)
-  }
-
+  // Fetch air quality data
   let airQuality: AirQuality | null = null
   try {
     const aqUrl = new URL("https://air-quality.open-meteo.com/v1/air-quality")
@@ -214,22 +199,7 @@ export async function fetchCurrentWeather(
     // Air quality data is optional, continue without it
   }
 
-  if (units.windSpeed === "knots") {
-    current.wind_speed_10m = current.wind_speed_10m * 0.539957
-    current.wind_gusts_10m = current.wind_gusts_10m * 0.539957
-    daily.wind_speed_10m_max = daily.wind_speed_10m_max * 0.539957
-    daily.wind_gusts_10m_max = daily.wind_gusts_10m_max * 0.539957
-    hourly.wind_speed_10m = hourly.wind_speed_10m.map(w => w * 0.539957)
-    hourly.wind_gusts_10m = hourly.wind_gusts_10m.map(w => w * 0.539957)
-  } else if (units.windSpeed === "beaufort") {
-    current.wind_speed_10m = getBeaufortScale(current.wind_speed_10m)
-    current.wind_gusts_10m = getBeaufortScale(current.wind_gusts_10m)
-    daily.wind_speed_10m_max = getBeaufortScale(daily.wind_speed_10m_max)
-    daily.wind_gusts_10m_max = getBeaufortScale(daily.wind_gusts_10m_max)
-    hourly.wind_speed_10m = hourly.wind_speed_10m.map(w => getBeaufortScale(w))
-    hourly.wind_gusts_10m = hourly.wind_gusts_10m.map(w => getBeaufortScale(w))
-  }
-
+  // Return all data in standard units: °C, m/s, mm, meters, hPa
   return {
     current,
     hourly,
@@ -332,24 +302,52 @@ export function getWeatherIcon(weather: CurrentWeather): string {
   return "clear-night"
 }
 
-export function formatTemperature(temp: number, unit: WeatherUnits["temperature"]): string {
-  if (unit === "kelvin") return `${Math.round(temp)}K`
-  return `${Math.round(temp)}°${unit === "fahrenheit" ? "F" : "C"}`
+export function formatTemperature(tempCelsius: number, unit: WeatherUnits["temperature"]): string {
+  let displayTemp = tempCelsius
+
+  if (unit === "fahrenheit") {
+    displayTemp = (tempCelsius * 9 / 5) + 32
+  } else if (unit === "kelvin") {
+    displayTemp = tempCelsius + 273.15
+  }
+
+  const rounded = Math.round(displayTemp)
+
+  if (unit === "kelvin") return `${rounded}K`
+  return `${rounded}°${unit === "fahrenheit" ? "F" : "C"}`
 }
 
-export function formatWindSpeed(speed: number, unit: WeatherUnits["windSpeed"]): string {
-  if (unit === "beaufort") {
-    const beaufortScale = getBeaufortScale(speed)
-    return `${beaufortScale} Bft wind force`
+export function formatWindSpeed(speedMs: number, unit: WeatherUnits["windSpeed"]): string {
+  let displaySpeed = speedMs
+
+  switch (unit) {
+    case "kmh":
+      displaySpeed = speedMs * 3.6
+      break
+    case "mph":
+      displaySpeed = speedMs * 2.237
+      break
+    case "knots":
+      displaySpeed = speedMs * 1.944
+      break
+    case "fts":
+      displaySpeed = speedMs * 3.281
+      break
+    case "beaufort":
+      return `${getBeaufortScale(speedMs)} Bft wind force`
+    case "ms":
+      // Already in m/s
+      break
   }
 
   const unitLabels = {
     ms: "m/s",
     kmh: "km/h",
     mph: "mph",
-    knots: "kts"
+    knots: "kts",
+    fts: "ft/s"
   }
-  return `${Math.round(speed)} ${unitLabels[unit as keyof typeof unitLabels]} wind`
+  return `${Math.round(displaySpeed)} ${unitLabels[unit as keyof typeof unitLabels]} wind`
 }
 
 function getBeaufortScale(speedMs: number): number {
@@ -370,41 +368,62 @@ function getBeaufortScale(speedMs: number): number {
 
 export function formatPrecipitation(
   probability: number,
-  _amount: number,
-  _unit: WeatherUnits["precipitation"]
+  amountMm: number,
+  unit: WeatherUnits["precipitation"]
 ): string {
-  return `${probability ?? 0}% rain`
-}
+  let displayAmount = amountMm
 
-export function getWindBeaufortIcon(windSpeed: number, unit: WeatherUnits["windSpeed"]): string {
-  let speedMs = windSpeed
-
-  switch (unit) {
-    case "kmh":
-      speedMs = windSpeed / 3.6
-      break
-    case "mph":
-      speedMs = windSpeed / 2.237
-      break
-    case "knots":
-      speedMs = windSpeed / 1.944
-      break
-    case "beaufort":
-      return `wind-beaufort-${Math.min(12, Math.max(0, Math.round(windSpeed)))}`
+  if (unit === "inch") {
+    displayAmount = amountMm / 25.4
   }
 
-  if (speedMs < 0.5) return "wind-beaufort-0"
-  if (speedMs < 1.6) return "wind-beaufort-1"
-  if (speedMs < 3.4) return "wind-beaufort-2"
-  if (speedMs < 5.5) return "wind-beaufort-3"
-  if (speedMs < 8.0) return "wind-beaufort-4"
-  if (speedMs < 10.8) return "wind-beaufort-5"
-  if (speedMs < 13.9) return "wind-beaufort-6"
-  if (speedMs < 17.2) return "wind-beaufort-7"
-  if (speedMs < 20.8) return "wind-beaufort-8"
-  if (speedMs < 24.5) return "wind-beaufort-9"
-  if (speedMs < 28.5) return "wind-beaufort-10"
-  if (speedMs < 32.7) return "wind-beaufort-11"
+  const unitLabel = unit === "inch" ? '"' : "mm"
+  return `${probability ?? 0}% rain, ${displayAmount.toFixed(1)}${unitLabel}`
+}
+
+export function formatVisibility(meters: number, unit: WeatherUnits["visibility"]): string {
+  if (unit === "miles") {
+    const miles = meters / 1609.34
+    return `${miles.toFixed(1)} mi`
+  }
+
+  if (meters < 1000) {
+    return `${Math.round(meters)} m`
+  }
+
+  return `${(meters / 1000).toFixed(1)} km`
+}
+
+export function formatPressure(hpa: number, unit: WeatherUnits["pressure"]): string {
+  switch (unit) {
+    case "mb":
+      return `${hpa.toFixed(0)} mb`
+    case "inhg":
+      return `${(hpa * 0.02953).toFixed(2)} inHg`
+    case "atm":
+      return `${(hpa / 1013.25).toFixed(3)} atm`
+    case "hpa":
+    default:
+      return `${hpa.toFixed(0)} hPa`
+  }
+}
+
+export function getWindBeaufortIcon(windSpeedMs: number, unit: WeatherUnits["windSpeed"]): string {
+  // Input is always in m/s (standard units)
+  // Convert m/s to Beaufort scale for icon selection
+
+  if (windSpeedMs < 0.5) return "wind-beaufort-0"
+  if (windSpeedMs < 1.6) return "wind-beaufort-1"
+  if (windSpeedMs < 3.4) return "wind-beaufort-2"
+  if (windSpeedMs < 5.5) return "wind-beaufort-3"
+  if (windSpeedMs < 8.0) return "wind-beaufort-4"
+  if (windSpeedMs < 10.8) return "wind-beaufort-5"
+  if (windSpeedMs < 13.9) return "wind-beaufort-6"
+  if (windSpeedMs < 17.2) return "wind-beaufort-7"
+  if (windSpeedMs < 20.8) return "wind-beaufort-8"
+  if (windSpeedMs < 24.5) return "wind-beaufort-9"
+  if (windSpeedMs < 28.5) return "wind-beaufort-10"
+  if (windSpeedMs < 32.7) return "wind-beaufort-11"
   return "wind-beaufort-12"
 }
 

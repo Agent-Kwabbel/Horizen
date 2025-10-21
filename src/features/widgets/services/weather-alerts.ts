@@ -1,5 +1,12 @@
 import type { WeatherData } from './weather-api'
 
+// All WeatherData values are in standard units:
+// - Temperature: Celsius
+// - Wind: m/s
+// - Precipitation: mm
+// - Visibility: meters
+// - Pressure: hPa
+
 export type AlertSeverity = 'advisory' | 'watch' | 'warning'
 
 export type WeatherAlert = {
@@ -17,29 +24,28 @@ function getClimateZone(latitude: number): 'tropical' | 'subtropical' | 'tempera
   return 'polar'
 }
 
-function kmhToMs(kmh: number): number {
-  return kmh / 3.6
-}
-
 function checkWindAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
+
+  // Wind speeds are already in m/s
   const maxGust = Math.max(data.current.wind_gusts_10m, data.daily.wind_gusts_10m_max)
   const maxWind = Math.max(data.current.wind_speed_10m, data.daily.wind_speed_10m_max)
-  const max = Math.max(maxGust, maxWind)
+  const maxWindMs = Math.max(maxGust, maxWind)
 
-  if (max >= kmhToMs(90)) {
+  // Thresholds in m/s: 90 km/h = 25 m/s, 65 km/h = 18.1 m/s, 50 km/h = 13.9 m/s
+  if (maxWindMs >= 25) {
     alerts.push({
       type: 'dangerous_storm',
       severity: 'warning',
       message: 'DANGEROUS STORM WARNING! Avoid all travel and stay indoors. Secure loose objects.'
     })
-  } else if (max >= kmhToMs(65)) {
+  } else if (maxWindMs >= 18.1) {
     alerts.push({
       type: 'gale',
       severity: 'watch',
       message: 'Gale watch. Strong winds expected. Secure outdoor objects and avoid unnecessary travel.'
     })
-  } else if (max >= kmhToMs(50)) {
+  } else if (maxWindMs >= 13.9) {
     alerts.push({
       type: 'wind',
       severity: 'advisory',
@@ -53,6 +59,8 @@ function checkWindAlerts(data: WeatherData): WeatherAlert[] {
 function checkTemperatureAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
   const zone = getClimateZone(data.latitude)
+
+  // Temperatures are already in Celsius
   const temp = data.current.temperature_2m
   const apparent = data.current.apparent_temperature
   const maxApparent = Math.max(apparent, data.daily.apparent_temperature_max)
@@ -114,6 +122,7 @@ function checkColdDurationAlert(
     return null
   }
 
+  // Temperatures are already in Celsius
   const hourlyTemps = data.hourly.apparent_temperature
 
   for (let i = 0; i <= hourlyTemps.length - 6; i++) {
@@ -163,16 +172,18 @@ function checkWindChillAlerts(data: WeatherData): WeatherAlert[] {
     return alerts
   }
 
+  // All values are already in standard units (Celsius, m/s)
   const windChillDiff = data.current.apparent_temperature - data.current.temperature_2m
-  const windSpeed = data.current.wind_speed_10m
+  const windMs = data.current.wind_speed_10m
 
-  if (windChillDiff < -15 && windSpeed >= kmhToMs(20)) {
+  // Thresholds: 20 km/h = 5.56 m/s
+  if (windChillDiff < -15 && windMs >= 5.56) {
     alerts.push({
       type: 'wind_chill',
       severity: 'warning',
       message: 'Wind chill warning. Dangerous wind chill values. Cover all exposed skin.'
     })
-  } else if (windChillDiff < -10 && windSpeed >= kmhToMs(20)) {
+  } else if (windChillDiff < -10 && windMs >= 5.56) {
     alerts.push({
       type: 'wind_chill',
       severity: 'advisory',
@@ -185,8 +196,9 @@ function checkWindChillAlerts(data: WeatherData): WeatherAlert[] {
 
 function checkPrecipitationAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
-  const hourlyPrecip = data.hourly.precipitation
 
+  // Precipitation is already in mm
+  const hourlyPrecip = data.hourly.precipitation
   const maxHourlyPrecip = Math.max(...hourlyPrecip)
 
   let max3HourPrecip = 0
@@ -276,6 +288,8 @@ function getSnowZoneType(latitude: number): 'rare' | 'regular' | 'extreme' {
 
 function checkWinterWeatherAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
+
+  // All values are already in standard units (Celsius, mm, m/s, meters)
   const temp = data.current.temperature_2m
   const snowfall = data.current.snowfall
   const hasSnowCode = [71, 73, 75, 77, 85, 86].includes(data.current.weather_code)
@@ -293,7 +307,8 @@ function checkWinterWeatherAlerts(data: WeatherData): WeatherAlert[] {
 
   const thresholds = snowThresholds[snowZone]
 
-  if (hasSnowCode && wind >= kmhToMs(56) && visibility < 400) {
+  // Thresholds: 56 km/h = 15.56 m/s
+  if (hasSnowCode && wind >= 15.56 && visibility < 400) {
     alerts.push({
       type: 'blizzard',
       severity: 'warning',
@@ -319,6 +334,7 @@ function checkWinterWeatherAlerts(data: WeatherData): WeatherAlert[] {
     })
   }
 
+  // Wet snow alert (temperature in Celsius, snowfall in mm)
   if (temp >= -2 && temp <= 2 && snowfall > 10) {
     alerts.push({
       type: 'wet_snow',
@@ -327,6 +343,7 @@ function checkWinterWeatherAlerts(data: WeatherData): WeatherAlert[] {
     })
   }
 
+  // Freezing rain and ice storm alerts (already in mm)
   if (hasFreezingRainCode && temp <= 0) {
     if (data.current.rain > 5 || data.current.precipitation > 5) {
       alerts.push({
@@ -349,17 +366,20 @@ function checkWinterWeatherAlerts(data: WeatherData): WeatherAlert[] {
 function checkThunderstormAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
   const hasThunderstorm = [95, 96, 99].includes(data.current.weather_code)
+
+  // Wind speeds are already in m/s
   const wind = data.current.wind_speed_10m
   const gusts = data.current.wind_gusts_10m
   const maxWind = Math.max(wind, gusts)
 
-  if (hasThunderstorm && maxWind >= kmhToMs(80)) {
+  // Thresholds: 80 km/h = 22.22 m/s, 50 km/h = 13.89 m/s
+  if (hasThunderstorm && maxWind >= 22.22) {
     alerts.push({
       type: 'severe_thunderstorm',
       severity: 'warning',
       message: 'SEVERE THUNDERSTORM WARNING! Damaging winds and heavy rain. Seek shelter immediately.'
     })
-  } else if (hasThunderstorm && maxWind >= kmhToMs(50)) {
+  } else if (hasThunderstorm && maxWind >= 13.89) {
     alerts.push({
       type: 'thunderstorm',
       severity: 'watch',
@@ -386,6 +406,8 @@ function checkThunderstormAlerts(data: WeatherData): WeatherAlert[] {
 
 function checkVisibilityAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
+
+  // Visibility is already in meters
   const visibility = data.current.visibility
   const hasFog = [45, 48].includes(data.current.weather_code)
 
@@ -435,10 +457,12 @@ function checkUVAlerts(data: WeatherData): WeatherAlert[] {
 
 function checkRapidHeatChangeAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
+
+  if (data.hourly.temperature_2m.length < 12) return alerts
+
+  // Temperatures are already in Celsius
   const hourlyTemps = data.hourly.temperature_2m
   const currentTemp = data.current.temperature_2m
-
-  if (hourlyTemps.length < 12) return alerts
 
   const temps12h = hourlyTemps.slice(0, 12)
   const maxTemp12h = Math.max(currentTemp, ...temps12h)
@@ -507,6 +531,8 @@ function checkAirQualityAlerts(data: WeatherData): WeatherAlert[] {
 export function detectWeatherAlerts(data: WeatherData): WeatherAlert[] {
   const allAlerts: WeatherAlert[] = []
 
+  // All data is in standard units: °C, m/s, mm, meters, hPa
+  // No conversion needed
   allAlerts.push(...checkWindAlerts(data))
   allAlerts.push(...checkTemperatureAlerts(data))
   allAlerts.push(...checkWindChillAlerts(data))

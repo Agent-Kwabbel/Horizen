@@ -16,10 +16,13 @@ export const WeatherWidgetSettingsSchema = z.object({
     latitude: z.number(),
     longitude: z.number(),
   }).optional(),
+  unitSystem: z.enum(["metric", "imperial", "scientific", "custom"]).default("metric"),
   units: z.object({
     temperature: z.enum(["celsius", "fahrenheit", "kelvin"]).default("celsius"),
-    windSpeed: z.enum(["ms", "kmh", "mph", "knots", "beaufort"]).default("ms"),
+    windSpeed: z.enum(["ms", "kmh", "mph", "knots", "beaufort", "fts"]).default("kmh"),
     precipitation: z.enum(["mm", "inch"]).default("mm"),
+    visibility: z.enum(["km", "miles"]).default("km"),
+    pressure: z.enum(["hpa", "mb", "inhg", "atm"]).default("hpa"),
   }).optional(),
   alertLevel: z.enum(["none", "warnings-only", "watch-and-warnings", "all"]).default("all"),
   alertTypes: z.object({
@@ -88,6 +91,85 @@ export type NotesWidgetConfig = z.infer<typeof NotesWidgetConfigSchema>
 export type QuoteWidgetConfig = z.infer<typeof QuoteWidgetConfigSchema>
 export type TickerWidgetConfig = z.infer<typeof TickerWidgetConfigSchema>
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>
+
+export type UnitSystem = "metric" | "imperial" | "scientific" | "custom"
+
+export function getUnitsForSystem(system: UnitSystem): WeatherWidgetConfig["settings"]["units"] {
+  switch (system) {
+    case "metric":
+      return {
+        temperature: "celsius",
+        windSpeed: "kmh",
+        precipitation: "mm",
+        visibility: "km",
+        pressure: "hpa",
+      }
+    case "imperial":
+      return {
+        temperature: "fahrenheit",
+        windSpeed: "mph",
+        precipitation: "inch",
+        visibility: "miles",
+        pressure: "inhg",
+      }
+    case "scientific":
+      return {
+        temperature: "kelvin",
+        windSpeed: "ms",
+        precipitation: "mm",
+        visibility: "km",
+        pressure: "hpa",
+      }
+    case "custom":
+      return {
+        temperature: "celsius",
+        windSpeed: "kmh",
+        precipitation: "mm",
+        visibility: "km",
+        pressure: "hpa",
+      }
+  }
+}
+
+export function detectUnitSystem(units?: WeatherWidgetConfig["settings"]["units"]): UnitSystem {
+  if (!units) return "metric"
+
+  const metricUnits = getUnitsForSystem("metric")
+  const imperialUnits = getUnitsForSystem("imperial")
+  const scientificUnits = getUnitsForSystem("scientific")
+
+  if (
+    units.temperature === metricUnits.temperature &&
+    units.windSpeed === metricUnits.windSpeed &&
+    units.precipitation === metricUnits.precipitation &&
+    units.visibility === metricUnits.visibility &&
+    units.pressure === metricUnits.pressure
+  ) {
+    return "metric"
+  }
+
+  if (
+    units.temperature === imperialUnits.temperature &&
+    units.windSpeed === imperialUnits.windSpeed &&
+    units.precipitation === imperialUnits.precipitation &&
+    units.visibility === imperialUnits.visibility &&
+    units.pressure === imperialUnits.pressure
+  ) {
+    return "imperial"
+  }
+
+  if (
+    units.temperature === scientificUnits.temperature &&
+    units.windSpeed === scientificUnits.windSpeed &&
+    units.precipitation === scientificUnits.precipitation &&
+    units.visibility === scientificUnits.visibility &&
+    units.pressure === scientificUnits.pressure
+  ) {
+    return "scientific"
+  }
+
+  return "custom"
+}
 
 export const WidgetsSchema = z.array(WidgetConfigSchema)
 

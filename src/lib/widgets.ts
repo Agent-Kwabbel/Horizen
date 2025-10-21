@@ -139,31 +139,31 @@ export function detectUnitSystem(units?: WeatherWidgetConfig["settings"]["units"
   const scientificUnits = getUnitsForSystem("scientific")
 
   if (
-    units.temperature === metricUnits.temperature &&
-    units.windSpeed === metricUnits.windSpeed &&
-    units.precipitation === metricUnits.precipitation &&
-    units.visibility === metricUnits.visibility &&
-    units.pressure === metricUnits.pressure
+    units.temperature === metricUnits?.temperature &&
+    units.windSpeed === metricUnits?.windSpeed &&
+    units.precipitation === metricUnits?.precipitation &&
+    units.visibility === metricUnits?.visibility &&
+    units.pressure === metricUnits?.pressure
   ) {
     return "metric"
   }
 
   if (
-    units.temperature === imperialUnits.temperature &&
-    units.windSpeed === imperialUnits.windSpeed &&
-    units.precipitation === imperialUnits.precipitation &&
-    units.visibility === imperialUnits.visibility &&
-    units.pressure === imperialUnits.pressure
+    units.temperature === imperialUnits?.temperature &&
+    units.windSpeed === imperialUnits?.windSpeed &&
+    units.precipitation === imperialUnits?.precipitation &&
+    units.visibility === imperialUnits?.visibility &&
+    units.pressure === imperialUnits?.pressure
   ) {
     return "imperial"
   }
 
   if (
-    units.temperature === scientificUnits.temperature &&
-    units.windSpeed === scientificUnits.windSpeed &&
-    units.precipitation === scientificUnits.precipitation &&
-    units.visibility === scientificUnits.visibility &&
-    units.pressure === scientificUnits.pressure
+    units.temperature === scientificUnits?.temperature &&
+    units.windSpeed === scientificUnits?.windSpeed &&
+    units.precipitation === scientificUnits?.precipitation &&
+    units.visibility === scientificUnits?.visibility &&
+    units.pressure === scientificUnits?.pressure
   ) {
     return "scientific"
   }
@@ -188,6 +188,7 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
     description: "Display current weather conditions",
     icon: "cloud",
     defaultSettings: {
+      unitSystem: "metric",
       alertLevel: "all",
       alertTypes: {
         wind: true,

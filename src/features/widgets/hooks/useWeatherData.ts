@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import type { WeatherUnits } from "@/lib/prefs"
 import type { Coordinates } from "../services/geocoding"
 import {
@@ -10,7 +10,7 @@ import {
   fetchCurrentWeather
 } from "../services/weather-api"
 
-export function useWeatherData(coords: Coordinates | null, units: WeatherUnits) {
+export function useWeatherData(coords: Coordinates | null, _units: WeatherUnits) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 

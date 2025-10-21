@@ -408,7 +408,7 @@ export function formatPressure(hpa: number, unit: WeatherUnits["pressure"]): str
   }
 }
 
-export function getWindBeaufortIcon(windSpeedMs: number, unit: WeatherUnits["windSpeed"]): string {
+export function getWindBeaufortIcon(windSpeedMs: number, _unit: WeatherUnits["windSpeed"]): string {
   // Input is always in m/s (standard units)
   // Convert m/s to Beaufort scale for icon selection
 

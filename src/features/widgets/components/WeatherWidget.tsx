@@ -15,8 +15,6 @@ import {
   getWindBeaufortIcon,
   getPrecipitationIcon,
   formatTemperature,
-  formatWindSpeed,
-  formatPrecipitation,
   getOverallAQI,
   formatVisibility,
   formatPressure

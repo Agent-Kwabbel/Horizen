@@ -29,6 +29,16 @@ describe('widgets utility functions', () => {
         icon: 'cloud',
         defaultSettings: {
           alertLevel: 'all',
+          alertTypes: {
+            wind: true,
+            temperature: true,
+            precipitation: true,
+            snow: true,
+            thunderstorm: true,
+            visibility: true,
+            uv: true,
+            airQuality: true,
+          },
         },
       })
     })
@@ -116,6 +126,16 @@ describe('widgets utility functions', () => {
         order: 0,
         settings: {
           alertLevel: 'all',
+          alertTypes: {
+            wind: true,
+            temperature: true,
+            precipitation: true,
+            snow: true,
+            thunderstorm: true,
+            visibility: true,
+            uv: true,
+            airQuality: true,
+          },
         },
       })
     })

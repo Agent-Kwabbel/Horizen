@@ -22,6 +22,16 @@ export const WeatherWidgetSettingsSchema = z.object({
     precipitation: z.enum(["mm", "inch"]).default("mm"),
   }).optional(),
   alertLevel: z.enum(["none", "warnings-only", "watch-and-warnings", "all"]).default("all"),
+  alertTypes: z.object({
+    wind: z.boolean().default(true),
+    temperature: z.boolean().default(true),
+    precipitation: z.boolean().default(true),
+    snow: z.boolean().default(true),
+    thunderstorm: z.boolean().default(true),
+    visibility: z.boolean().default(true),
+    uv: z.boolean().default(true),
+    airQuality: z.boolean().default(true),
+  }).optional(),
 })
 
 export const NotesWidgetSettingsSchema = z.object({
@@ -97,6 +107,16 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
     icon: "cloud",
     defaultSettings: {
       alertLevel: "all",
+      alertTypes: {
+        wind: true,
+        temperature: true,
+        precipitation: true,
+        snow: true,
+        thunderstorm: true,
+        visibility: true,
+        uv: true,
+        airQuality: true,
+      },
     },
   },
   notes: {

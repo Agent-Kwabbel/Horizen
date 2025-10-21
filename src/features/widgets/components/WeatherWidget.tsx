@@ -17,7 +17,7 @@ import {
   formatWindSpeed,
   formatPrecipitation
 } from "../services/weather-api"
-import { detectWeatherAlerts, filterAlertsByLevel } from "../services/weather-alerts"
+import { detectWeatherAlerts, filterAlertsByLevel, filterAlertsByType } from "../services/weather-alerts"
 
 const DEFAULT_UNITS = {
   temperature: "celsius" as const,
@@ -32,6 +32,7 @@ type WeatherWidgetProps = {
 export default function WeatherWidget({ config }: WeatherWidgetProps) {
   const units = config.settings.units || DEFAULT_UNITS
   const alertLevel = config.settings.alertLevel || "all"
+  const alertTypes = config.settings.alertTypes
   const {
     coords,
     setLocation,
@@ -46,7 +47,8 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
 
   const title = coords ? coords.name : "Select location"
   const allAlerts = weather ? detectWeatherAlerts(weather) : []
-  const alerts = filterAlertsByLevel(allAlerts, alertLevel)
+  const filteredByLevel = filterAlertsByLevel(allAlerts, alertLevel)
+  const alerts = filterAlertsByType(filteredByLevel, alertTypes)
 
   return (
     <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] overflow-hidden py-0">

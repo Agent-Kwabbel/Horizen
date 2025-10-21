@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -98,6 +99,32 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
       ...p,
       widgets: updateWidgetSettings(p.widgets, widgetId, {
         alertLevel: value,
+      }),
+    }))
+  }
+
+  const handleWeatherAlertTypeChange = (widgetId: string, alertType: string, enabled: boolean) => {
+    const widget = prefs.widgets.find((w) => w.id === widgetId)
+    if (!widget || widget.type !== "weather") return
+
+    const currentAlertTypes = widget.settings.alertTypes || {
+      wind: true,
+      temperature: true,
+      precipitation: true,
+      snow: true,
+      thunderstorm: true,
+      visibility: true,
+      uv: true,
+      airQuality: true,
+    }
+
+    setPrefs((p) => ({
+      ...p,
+      widgets: updateWidgetSettings(p.widgets, widgetId, {
+        alertTypes: {
+          ...currentAlertTypes,
+          [alertType]: enabled,
+        },
       }),
     }))
   }
@@ -215,18 +242,17 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div className="flex items-center justify-between">
                             <div>
-                              <Label htmlFor={`quick-jot-${widget.id}`} className="text-sm font-normal text-white">
+                              <Label htmlFor={`quick-jot-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
                                 Quick Jot Mode
                               </Label>
                               <p className="text-xs text-white/60 mt-1">
                                 Always show editor (no markdown preview)
                               </p>
                             </div>
-                            <Checkbox
+                            <Switch
                               id={`quick-jot-${widget.id}`}
                               checked={(widget as NotesWidgetConfig).settings.quickJot || false}
-                              onCheckedChange={(checked) => handleNotesQuickJotChange(widget.id, checked as boolean)}
-                              className="border-white/30 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                              onCheckedChange={(checked) => handleNotesQuickJotChange(widget.id, checked)}
                             />
                           </div>
                         </div>
@@ -319,6 +345,49 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               Weather alerts are automatically detected based on current conditions and forecasts. These are not official warnings from meteorological organizations.
                             </p>
                           </div>
+
+                          {(widget as WeatherWidgetConfig).settings.alertLevel !== "none" && (
+                            <div>
+                              <Label className="text-xs font-normal text-white/70 mb-3 block">
+                                Alert Types
+                              </Label>
+                              <div className="space-y-2.5">
+                                {[
+                                  { key: 'wind', label: 'Wind Alerts' },
+                                  { key: 'temperature', label: 'Temperature Alerts' },
+                                  { key: 'precipitation', label: 'Rain Alerts' },
+                                  { key: 'snow', label: 'Snow Alerts' },
+                                  { key: 'thunderstorm', label: 'Thunderstorm Alerts' },
+                                  { key: 'visibility', label: 'Visibility Alerts' },
+                                  { key: 'uv', label: 'UV Index Alerts' },
+                                  { key: 'airQuality', label: 'Air Quality Alerts' },
+                                ].map(({ key, label }) => {
+                                  const alertTypes = (widget as WeatherWidgetConfig).settings.alertTypes || {
+                                    wind: true,
+                                    temperature: true,
+                                    precipitation: true,
+                                    snow: true,
+                                    thunderstorm: true,
+                                    visibility: true,
+                                    uv: true,
+                                    airQuality: true,
+                                  }
+                                  return (
+                                    <div key={key} className="flex items-center justify-between">
+                                      <Label htmlFor={`alert-${key}-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                                        {label}
+                                      </Label>
+                                      <Switch
+                                        id={`alert-${key}-${widget.id}`}
+                                        checked={alertTypes[key as keyof typeof alertTypes] !== false}
+                                        onCheckedChange={(checked) => handleWeatherAlertTypeChange(widget.id, key, checked)}
+                                      />
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 

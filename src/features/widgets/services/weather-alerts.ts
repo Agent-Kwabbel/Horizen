@@ -547,6 +547,50 @@ export function getHighestSeverity(alerts: WeatherAlert[]): AlertSeverity | null
 
 export type AlertLevel = 'none' | 'warnings-only' | 'watch-and-warnings' | 'all'
 
+export type AlertTypes = {
+  wind?: boolean
+  temperature?: boolean
+  precipitation?: boolean
+  snow?: boolean
+  thunderstorm?: boolean
+  visibility?: boolean
+  uv?: boolean
+  airQuality?: boolean
+}
+
+const ALERT_TYPE_MAPPING: Record<string, keyof AlertTypes> = {
+  'dangerous_storm': 'wind',
+  'gale': 'wind',
+  'wind': 'wind',
+  'extreme_heat': 'temperature',
+  'excessive_heat': 'temperature',
+  'heat': 'temperature',
+  'extreme_cold': 'temperature',
+  'cold_weather': 'temperature',
+  'cold': 'temperature',
+  'wind_chill': 'temperature',
+  'rapid_temp_change': 'temperature',
+  'heavy_rain': 'precipitation',
+  'flood': 'precipitation',
+  'rain': 'precipitation',
+  'blizzard': 'snow',
+  'heavy_snow': 'snow',
+  'winter_weather': 'snow',
+  'snow': 'snow',
+  'wet_snow': 'snow',
+  'ice_storm': 'snow',
+  'freezing_rain': 'snow',
+  'severe_thunderstorm': 'thunderstorm',
+  'thunderstorm': 'thunderstorm',
+  'hail': 'thunderstorm',
+  'extreme_fog': 'visibility',
+  'dense_fog': 'visibility',
+  'fog': 'visibility',
+  'high_uv': 'uv',
+  'uv': 'uv',
+  'air_quality': 'airQuality',
+}
+
 export function filterAlertsByLevel(alerts: WeatherAlert[], level: AlertLevel): WeatherAlert[] {
   if (level === 'none') return []
   if (level === 'all') return alerts
@@ -560,4 +604,14 @@ export function filterAlertsByLevel(alerts: WeatherAlert[], level: AlertLevel): 
   }
 
   return alerts
+}
+
+export function filterAlertsByType(alerts: WeatherAlert[], alertTypes?: AlertTypes): WeatherAlert[] {
+  if (!alertTypes) return alerts
+
+  return alerts.filter(alert => {
+    const category = ALERT_TYPE_MAPPING[alert.type]
+    if (!category) return true
+    return alertTypes[category] !== false
+  })
 }

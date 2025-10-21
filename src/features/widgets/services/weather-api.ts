@@ -5,6 +5,7 @@ export type CurrentWeather = {
   apparent_temperature: number
   wind_speed_10m: number
   wind_gusts_10m: number
+  wind_direction_10m: number
   precipitation_probability: number
   precipitation: number
   rain: number
@@ -40,6 +41,8 @@ export type DailyWeather = {
   wind_speed_10m_max: number
   wind_gusts_10m_max: number
   uv_index_max: number
+  sunrise: string
+  sunset: string
 }
 
 export type AirQuality = {
@@ -52,6 +55,24 @@ export type AirQuality = {
   ozone: number
   european_aqi_o3: number
   us_aqi_o3: number
+  european_aqi?: number
+  us_aqi?: number
+}
+
+export function getOverallAQI(airQuality: AirQuality): number {
+  // If direct AQI is available, use it
+  if (airQuality.us_aqi != null) {
+    return airQuality.us_aqi
+  }
+
+  // Otherwise calculate from component AQIs (US AQI is the maximum of all components)
+  const componentAQIs = [
+    airQuality.us_aqi_pm2_5 || 0,
+    airQuality.us_aqi_pm10 || 0,
+    airQuality.us_aqi_o3 || 0
+  ].filter(val => val > 0)
+
+  return componentAQIs.length > 0 ? Math.max(...componentAQIs) : 0
 }
 
 export type WeatherData = {
@@ -114,13 +135,13 @@ export async function fetchCurrentWeather(
   url.searchParams.set("longitude", String(lon))
   url.searchParams.set(
     "current",
-    "temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,rain,showers,snowfall,cloud_cover,relative_humidity_2m,surface_pressure,visibility"
+    "temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation,precipitation_probability,rain,showers,snowfall,cloud_cover,relative_humidity_2m,surface_pressure,visibility"
   )
   url.searchParams.set(
     "hourly",
     "temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,uv_index,wind_speed_10m,wind_gusts_10m"
   )
-  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_hours,weather_code,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max")
+  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_hours,weather_code,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max,sunrise,sunset")
   url.searchParams.set("forecast_days", "3")
   url.searchParams.set("past_hours", "6")
   url.searchParams.set("forecast_hours", "24")
@@ -160,6 +181,8 @@ export async function fetchCurrentWeather(
     wind_speed_10m_max: j.daily.wind_speed_10m_max[0],
     wind_gusts_10m_max: j.daily.wind_gusts_10m_max[0],
     uv_index_max: j.daily.uv_index_max[0],
+    sunrise: j.daily.sunrise[0],
+    sunset: j.daily.sunset[0],
   }
 
   if (units.temperature === "kelvin") {
@@ -179,7 +202,7 @@ export async function fetchCurrentWeather(
     const aqUrl = new URL("https://air-quality.open-meteo.com/v1/air-quality")
     aqUrl.searchParams.set("latitude", String(lat))
     aqUrl.searchParams.set("longitude", String(lon))
-    aqUrl.searchParams.set("current", "pm2_5,european_aqi_pm2_5,us_aqi_pm2_5,pm10,european_aqi_pm10,us_aqi_pm10,ozone,european_aqi_o3,us_aqi_o3")
+    aqUrl.searchParams.set("current", "pm2_5,european_aqi_pm2_5,us_aqi_pm2_5,pm10,european_aqi_pm10,us_aqi_pm10,ozone,european_aqi_o3,us_aqi_o3,european_aqi,us_aqi")
 
     const aqRes = await fetch(aqUrl.toString())
     const aqData = await aqRes.json()

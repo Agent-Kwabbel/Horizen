@@ -22,8 +22,17 @@ export default function DevModeOverlay() {
   const [overrideTemp, setOverrideTemp] = useState("")
   const [overrideFeelsLike, setOverrideFeelsLike] = useState("")
   const [overrideWind, setOverrideWind] = useState("")
+  const [overrideWindGusts, setOverrideWindGusts] = useState("")
+  const [overrideVisibility, setOverrideVisibility] = useState("")
   const [overridePrecipProb, setOverridePrecipProb] = useState("")
   const [overridePrecip, setOverridePrecip] = useState("")
+  const [overrideSnowfall, setOverrideSnowfall] = useState("")
+  const [overrideWeatherCode, setOverrideWeatherCode] = useState("")
+  const [overrideTempMax, setOverrideTempMax] = useState("")
+  const [overrideTempMin, setOverrideTempMin] = useState("")
+  const [overrideUVIndex, setOverrideUVIndex] = useState("")
+  const [overridePM25, setOverridePM25] = useState("")
+  const [overrideOzone, setOverrideOzone] = useState("")
 
   // Ticker widget dev controls
   const [tickerIndex, setTickerIndex] = useState("")
@@ -83,13 +92,58 @@ export default function DevModeOverlay() {
     // Get existing cache or create new data
     const existingCache = localStorage.getItem(cacheKey)
     let weatherData: any = {
-      temperature_2m: 20,
-      apparent_temperature: 18,
-      wind_speed_10m: 5,
-      precipitation_probability: 0,
-      precipitation: 0,
-      is_day: 1,
-      weather_code: 0,
+      current: {
+        temperature_2m: 20,
+        apparent_temperature: 18,
+        wind_speed_10m: 5,
+        wind_gusts_10m: 8,
+        precipitation_probability: 0,
+        precipitation: 0,
+        rain: 0,
+        showers: 0,
+        snowfall: 0,
+        cloud_cover: 0,
+        is_day: 1,
+        weather_code: 0,
+        relative_humidity_2m: 50,
+        surface_pressure: 1013,
+        visibility: 10000,
+      },
+      hourly: {
+        temperature_2m: Array(30).fill(20),
+        apparent_temperature: Array(30).fill(18),
+        precipitation_probability: Array(30).fill(0),
+        precipitation: Array(30).fill(0),
+        weather_code: Array(30).fill(0),
+        uv_index: Array(30).fill(3),
+        wind_speed_10m: Array(30).fill(5),
+        wind_gusts_10m: Array(30).fill(8),
+      },
+      daily: {
+        temperature_2m_max: 25,
+        temperature_2m_min: 15,
+        apparent_temperature_max: 23,
+        apparent_temperature_min: 13,
+        precipitation_sum: 0,
+        precipitation_hours: 0,
+        weather_code: 0,
+        wind_speed_10m_max: 10,
+        wind_gusts_10m_max: 15,
+        uv_index_max: 5,
+      },
+      airQuality: {
+        pm2_5: 10,
+        european_aqi_pm2_5: 15,
+        us_aqi_pm2_5: 20,
+        pm10: 15,
+        european_aqi_pm10: 20,
+        us_aqi_pm10: 25,
+        ozone: 50,
+        european_aqi_o3: 60,
+        us_aqi_o3: 70,
+      },
+      latitude: location.latitude,
+      longitude: location.longitude,
     }
 
     if (existingCache) {
@@ -101,12 +155,26 @@ export default function DevModeOverlay() {
       }
     }
 
-    // Apply overrides
-    if (overrideTemp) weatherData.temperature_2m = parseFloat(overrideTemp)
-    if (overrideFeelsLike) weatherData.apparent_temperature = parseFloat(overrideFeelsLike)
-    if (overrideWind) weatherData.wind_speed_10m = parseFloat(overrideWind)
-    if (overridePrecipProb) weatherData.precipitation_probability = parseFloat(overridePrecipProb)
-    if (overridePrecip) weatherData.precipitation = parseFloat(overridePrecip)
+    // Apply overrides to current weather
+    if (overrideTemp) weatherData.current.temperature_2m = parseFloat(overrideTemp)
+    if (overrideFeelsLike) weatherData.current.apparent_temperature = parseFloat(overrideFeelsLike)
+    if (overrideWind) weatherData.current.wind_speed_10m = parseFloat(overrideWind)
+    if (overrideWindGusts) weatherData.current.wind_gusts_10m = parseFloat(overrideWindGusts)
+    if (overrideVisibility) weatherData.current.visibility = parseFloat(overrideVisibility)
+    if (overridePrecipProb) weatherData.current.precipitation_probability = parseFloat(overridePrecipProb)
+    if (overridePrecip) weatherData.current.precipitation = parseFloat(overridePrecip)
+    if (overrideSnowfall) weatherData.current.snowfall = parseFloat(overrideSnowfall)
+    if (overrideWeatherCode) weatherData.current.weather_code = parseInt(overrideWeatherCode)
+
+    // Apply overrides to daily weather
+    if (overrideTempMax) weatherData.daily.temperature_2m_max = parseFloat(overrideTempMax)
+    if (overrideTempMin) weatherData.daily.temperature_2m_min = parseFloat(overrideTempMin)
+    if (overrideWindGusts) weatherData.daily.wind_gusts_10m_max = parseFloat(overrideWindGusts)
+    if (overrideUVIndex) weatherData.daily.uv_index_max = parseFloat(overrideUVIndex)
+
+    // Apply overrides to air quality
+    if (overridePM25) weatherData.airQuality.pm2_5 = parseFloat(overridePM25)
+    if (overrideOzone) weatherData.airQuality.ozone = parseFloat(overrideOzone)
 
     // Save to cache
     localStorage.setItem(cacheKey, JSON.stringify({
@@ -343,48 +411,99 @@ export default function DevModeOverlay() {
                             <div className="space-y-3">
                               <div className="text-xs font-mono text-yellow-500">OVERRIDE WEATHER DATA</div>
                               <div className="text-xs text-white/40">
-                                Override actual API values for testing
+                                Override actual API values for testing. All values use base units (Celsius, m/s, mm, etc.)
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Temperature (°C)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideTemp}
+                                    onChange={(e) => setOverrideTemp(e.target.value)}
+                                    placeholder="e.g., 25"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Feels Like (°C)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideFeelsLike}
+                                    onChange={(e) => setOverrideFeelsLike(e.target.value)}
+                                    placeholder="e.g., 23"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">High Temp (°C)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideTempMax}
+                                    onChange={(e) => setOverrideTempMax(e.target.value)}
+                                    placeholder="e.g., 28"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Low Temp (°C)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideTempMin}
+                                    onChange={(e) => setOverrideTempMin(e.target.value)}
+                                    placeholder="e.g., 15"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
                               </div>
 
                               <div className="space-y-2">
-                                <Label className="text-xs text-white/70">Temperature</Label>
+                                <Label className="text-xs text-white/70">Weather Code (WMO)</Label>
                                 <Input
                                   type="number"
-                                  step="0.1"
-                                  value={overrideTemp}
-                                  onChange={(e) => setOverrideTemp(e.target.value)}
-                                  placeholder="e.g., 25"
-                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs text-white/70">Feels Like</Label>
-                                <Input
-                                  type="number"
-                                  step="0.1"
-                                  value={overrideFeelsLike}
-                                  onChange={(e) => setOverrideFeelsLike(e.target.value)}
-                                  placeholder="e.g., 23"
-                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs text-white/70">Wind Speed</Label>
-                                <Input
-                                  type="number"
-                                  step="0.1"
-                                  value={overrideWind}
-                                  onChange={(e) => setOverrideWind(e.target.value)}
-                                  placeholder="e.g., 12"
+                                  step="1"
+                                  value={overrideWeatherCode}
+                                  onChange={(e) => setOverrideWeatherCode(e.target.value)}
+                                  placeholder="0-99 (e.g., 0=clear, 95=thunderstorm)"
                                   className="bg-white/5 border-white/10 text-white text-sm h-8"
                                 />
                               </div>
 
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-2">
-                                  <Label className="text-xs text-white/70">Precip %</Label>
+                                  <Label className="text-xs text-white/70">Wind Speed (m/s)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideWind}
+                                    onChange={(e) => setOverrideWind(e.target.value)}
+                                    placeholder="e.g., 12"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Wind Gusts (m/s)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideWindGusts}
+                                    onChange={(e) => setOverrideWindGusts(e.target.value)}
+                                    placeholder="e.g., 20"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Precip Prob (%)</Label>
                                   <Input
                                     type="number"
                                     step="1"
@@ -395,13 +514,75 @@ export default function DevModeOverlay() {
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label className="text-xs text-white/70">Precip Amt</Label>
+                                  <Label className="text-xs text-white/70">Precip Amt (mm)</Label>
                                   <Input
                                     type="number"
                                     step="0.1"
                                     value={overridePrecip}
                                     onChange={(e) => setOverridePrecip(e.target.value)}
                                     placeholder="e.g., 2.5"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Snowfall (cm)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideSnowfall}
+                                    onChange={(e) => setOverrideSnowfall(e.target.value)}
+                                    placeholder="e.g., 10"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Visibility (m)</Label>
+                                  <Input
+                                    type="number"
+                                    step="100"
+                                    value={overrideVisibility}
+                                    onChange={(e) => setOverrideVisibility(e.target.value)}
+                                    placeholder="e.g., 10000"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs text-white/70">UV Index (0-15)</Label>
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  value={overrideUVIndex}
+                                  onChange={(e) => setOverrideUVIndex(e.target.value)}
+                                  placeholder="e.g., 8"
+                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">PM2.5 (µg/m³)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overridePM25}
+                                    onChange={(e) => setOverridePM25(e.target.value)}
+                                    placeholder="e.g., 35"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Ozone (µg/m³)</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={overrideOzone}
+                                    onChange={(e) => setOverrideOzone(e.target.value)}
+                                    placeholder="e.g., 100"
                                     className="bg-white/5 border-white/10 text-white text-sm h-8"
                                   />
                                 </div>

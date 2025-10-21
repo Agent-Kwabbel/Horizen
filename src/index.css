@@ -154,3 +154,29 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes scroll-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 12s linear infinite;
+}
+
+.animate-scroll-left:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-alert {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-scroll-alert {
+  animation: scroll-alert 25s linear infinite;
+}
+
+.animate-scroll-alert:hover {
+  animation-play-state: paused;
+}

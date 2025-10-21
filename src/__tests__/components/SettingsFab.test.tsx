@@ -624,7 +624,8 @@ describe('SettingsFab', () => {
       await user.click(button)
 
       await waitFor(() => {
-        expect(screen.getByText('Security (BETA)')).toBeInTheDocument()
+        expect(screen.getByText('Security')).toBeInTheDocument()
+        expect(screen.getAllByText('BETA').length).toBeGreaterThan(0)
       })
     })
 
@@ -674,7 +675,8 @@ describe('SettingsFab', () => {
       await user.click(button)
 
       await waitFor(() => {
-        expect(screen.getByText('Import & Export (BETA)')).toBeInTheDocument()
+        expect(screen.getByText('Import & Export')).toBeInTheDocument()
+        expect(screen.getAllByText('BETA').length).toBeGreaterThan(0)
       })
     })
 

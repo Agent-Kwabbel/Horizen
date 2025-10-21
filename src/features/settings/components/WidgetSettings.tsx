@@ -93,6 +93,15 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
     }))
   }
 
+  const handleWeatherAlertLevelChange = (widgetId: string, value: string) => {
+    setPrefs((p) => ({
+      ...p,
+      widgets: updateWidgetSettings(p.widgets, widgetId, {
+        alertLevel: value,
+      }),
+    }))
+  }
+
   const handleNotesQuickJotChange = (widgetId: string, checked: boolean) => {
     setPrefs((p) => ({
       ...p,
@@ -281,6 +290,34 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 <SelectItem value="inch">Inches (in)</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Label htmlFor={`alert-level-${widget.id}`} className="text-xs font-normal text-white/70">
+                                Weather Alerts
+                              </Label>
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                BETA
+                              </span>
+                            </div>
+                            <Select
+                              value={(widget as WeatherWidgetConfig).settings.alertLevel || "all"}
+                              onValueChange={(v) => handleWeatherAlertLevelChange(widget.id, v)}
+                            >
+                              <SelectTrigger id={`alert-level-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-black/90 text-white border-white/10">
+                                <SelectItem value="all">All alerts (Advisory, Watch, Warning)</SelectItem>
+                                <SelectItem value="watch-and-warnings">Watch and Warnings only</SelectItem>
+                                <SelectItem value="warnings-only">Warnings only</SelectItem>
+                                <SelectItem value="none">None (disable alerts)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-white/50 mt-2">
+                              Weather alerts are automatically detected based on current conditions and forecasts. These are not official warnings from meteorological organizations.
+                            </p>
                           </div>
                         </div>
                       )}

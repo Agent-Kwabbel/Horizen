@@ -8,6 +8,7 @@ import type { WeatherWidgetConfig } from "@/lib/widgets"
 import { useWeatherData } from "../hooks/useWeatherData"
 import { useLocationSearch } from "../hooks/useLocationSearch"
 import WeatherIcon from "./WeatherIcon"
+import WeatherAlerts from "./WeatherAlerts"
 import {
   getWeatherIcon,
   getWindBeaufortIcon,
@@ -16,6 +17,7 @@ import {
   formatWindSpeed,
   formatPrecipitation
 } from "../services/weather-api"
+import { detectWeatherAlerts, filterAlertsByLevel } from "../services/weather-alerts"
 
 const DEFAULT_UNITS = {
   temperature: "celsius" as const,
@@ -29,6 +31,7 @@ type WeatherWidgetProps = {
 
 export default function WeatherWidget({ config }: WeatherWidgetProps) {
   const units = config.settings.units || DEFAULT_UNITS
+  const alertLevel = config.settings.alertLevel || "all"
   const {
     coords,
     setLocation,
@@ -42,10 +45,12 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
   const { weather, refresh } = useWeatherData(coords, units)
 
   const title = coords ? coords.name : "Select location"
+  const allAlerts = weather ? detectWeatherAlerts(weather) : []
+  const alerts = filterAlertsByLevel(allAlerts, alertLevel)
 
   return (
-    <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] py-2">
-      <CardContent className="p-4 py-4">
+    <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] overflow-hidden py-0">
+      <CardContent className={`p-4 ${alerts.length > 0 ? 'pb-0' : ''}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="text-sm text-white/70 truncate" title={title}>
@@ -162,6 +167,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
           </div>
         </div>
       </CardContent>
+      <WeatherAlerts alerts={alerts} />
     </Card>
   )
 }

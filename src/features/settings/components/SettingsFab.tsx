@@ -325,10 +325,15 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
 
             <div>
               <div className="mb-3">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  Security (BETA)
-                </h4>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <h4 className="text-sm font-medium">Security</h4>
+                  </div>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    BETA
+                  </span>
+                </div>
                 <p className="text-xs text-white/60 mt-1">
                   Protect your API keys with password-based encryption.
                 </p>
@@ -425,7 +430,12 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
 
             <div>
               <div className="mb-3">
-                <h3 className="text-lg font-semibold">Import & Export (BETA)</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold">Import & Export</h3>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    BETA
+                  </span>
+                </div>
                 <p className="text-xs text-white/60 mt-1">
                   Backup or restore your data, preferences, and conversations.
                 </p>

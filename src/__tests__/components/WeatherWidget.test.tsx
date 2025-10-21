@@ -10,19 +10,43 @@ const mockWeatherData = {
     temperature_2m: 22.5,
     apparent_temperature: 20.1,
     wind_speed_10m: 15.3,
+    wind_gusts_10m: 18.0,
     precipitation_probability: 30,
     precipitation: 1.2,
     rain: 0,
     showers: 0,
     snowfall: 0,
+    visibility: 10000,
     cloud_cover: 10,
     is_day: 1 as const,
     weather_code: 0,
+    relative_humidity_2m: 65,
+    surface_pressure: 1013,
+  },
+  hourly: {
+    temperature_2m: Array(30).fill(22),
+    apparent_temperature: Array(30).fill(20),
+    precipitation_probability: Array(30).fill(30),
+    precipitation: Array(30).fill(1.2),
+    weather_code: Array(30).fill(0),
+    uv_index: Array(30).fill(5),
+    wind_speed_10m: Array(30).fill(15),
+    wind_gusts_10m: Array(30).fill(18),
   },
   daily: {
-    temperature_2m_max: [25.0],
-    temperature_2m_min: [18.0],
+    temperature_2m_max: [25.0, 26.0, 24.0],
+    temperature_2m_min: [18.0, 17.0, 19.0],
+    apparent_temperature_max: [23.0, 24.0, 22.0],
+    apparent_temperature_min: [16.0, 15.0, 17.0],
+    precipitation_sum: [2.5, 0, 1.0],
+    precipitation_hours: [2, 0, 1],
+    weather_code: [0, 0, 1],
+    wind_speed_10m_max: [20, 18, 22],
+    wind_gusts_10m_max: [25, 23, 27],
+    uv_index_max: [8, 9, 7],
   },
+  latitude: 51.5074,
+  longitude: -0.1278,
 }
 
 const mockGeoResults = [
@@ -110,7 +134,8 @@ describe('WeatherWidget', () => {
       expect(screen.getByText(/Feels\s+20°C/)).toBeInTheDocument()
       expect(screen.getByText(/15 m\/s wind/)).toBeInTheDocument()
       expect(screen.getByText(/30% rain/)).toBeInTheDocument()
-      expect(screen.getByText(/H: 25°C · L: 18°C/)).toBeInTheDocument()
+      expect(screen.getByText(/H: 25°C/)).toBeInTheDocument()
+      expect(screen.getByText(/L: 18°C/)).toBeInTheDocument()
     })
   })
 

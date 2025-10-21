@@ -18,9 +18,10 @@ export const WeatherWidgetSettingsSchema = z.object({
   }).optional(),
   units: z.object({
     temperature: z.enum(["celsius", "fahrenheit", "kelvin"]).default("celsius"),
-    windSpeed: z.enum(["ms", "kmh", "mph", "knots"]).default("ms"),
+    windSpeed: z.enum(["ms", "kmh", "mph", "knots", "beaufort"]).default("ms"),
     precipitation: z.enum(["mm", "inch"]).default("mm"),
   }).optional(),
+  alertLevel: z.enum(["none", "warnings-only", "watch-and-warnings", "all"]).default("all"),
 })
 
 export const NotesWidgetSettingsSchema = z.object({
@@ -94,7 +95,9 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
     name: "Weather",
     description: "Display current weather conditions",
     icon: "cloud",
-    defaultSettings: {},
+    defaultSettings: {
+      alertLevel: "all",
+    },
   },
   notes: {
     type: "notes",
@@ -240,7 +243,9 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
     type: "weather",
     enabled: true,
     order: 0,
-    settings: {},
+    settings: {
+      alertLevel: "all",
+    },
   },
   {
     id: "notes-default",

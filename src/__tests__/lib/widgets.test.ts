@@ -27,7 +27,9 @@ describe('widgets utility functions', () => {
         name: 'Weather',
         description: 'Display current weather conditions',
         icon: 'cloud',
-        defaultSettings: {},
+        defaultSettings: {
+          alertLevel: 'all',
+        },
       })
     })
 
@@ -73,7 +75,9 @@ describe('widgets utility functions', () => {
         type: 'weather',
         enabled: true,
         order: 0,
-        settings: {},
+        settings: {
+          alertLevel: 'all',
+        },
       })
     })
 
@@ -110,7 +114,9 @@ describe('widgets utility functions', () => {
         type: 'weather',
         enabled: true,
         order: 0,
-        settings: {},
+        settings: {
+          alertLevel: 'all',
+        },
       })
     })
 
@@ -159,7 +165,7 @@ describe('widgets utility functions', () => {
   describe('getEnabledWidgets', () => {
     it('should return only enabled widgets', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: false, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
         { id: '3', type: 'quote', enabled: true, order: 2, settings: { autoRotate: true, rotateInterval: 86400000 } },
       ]
@@ -172,7 +178,7 @@ describe('widgets utility functions', () => {
 
     it('should return widgets sorted by order', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 2, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 2, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 0, settings: { content: '', maxLength: 500, quickJot: false } },
         { id: '3', type: 'quote', enabled: true, order: 1, settings: { category: 'mixed', autoRotate: true, rotateInterval: 86400000 } },
       ]
@@ -185,7 +191,7 @@ describe('widgets utility functions', () => {
 
     it('should return empty array when no widgets are enabled', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: false, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: false, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: false, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
       ]
 
@@ -202,7 +208,7 @@ describe('widgets utility functions', () => {
   describe('reorderWidgets', () => {
     it('should move widget to new position and update order values', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
         { id: '3', type: 'quote', enabled: true, order: 2, settings: { autoRotate: true, rotateInterval: 86400000 } },
       ]
@@ -218,7 +224,7 @@ describe('widgets utility functions', () => {
 
     it('should move widget from end to beginning', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
         { id: '3', type: 'quote', enabled: true, order: 2, settings: { autoRotate: true, rotateInterval: 86400000 } },
       ]
@@ -231,7 +237,7 @@ describe('widgets utility functions', () => {
 
     it('should return original array if widget ID not found', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
       ]
 
@@ -241,7 +247,7 @@ describe('widgets utility functions', () => {
 
     it('should handle moving to same position', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
       ]
 
@@ -253,7 +259,7 @@ describe('widgets utility functions', () => {
   describe('toggleWidget', () => {
     it('should toggle widget enabled state from true to false', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
       ]
 
@@ -264,7 +270,7 @@ describe('widgets utility functions', () => {
 
     it('should toggle widget enabled state from false to true', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: false, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: false, order: 0, settings: { alertLevel: 'all' } },
       ]
 
       const toggled = toggleWidget(widgets, '1')
@@ -273,7 +279,7 @@ describe('widgets utility functions', () => {
 
     it('should not modify other widgets', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: '', maxLength: 500, quickJot: false } },
         { id: '3', type: 'quote', enabled: false, order: 2, settings: { category: 'mixed', autoRotate: true, rotateInterval: 86400000 } },
       ]
@@ -286,7 +292,7 @@ describe('widgets utility functions', () => {
 
     it('should return unchanged array if widget ID not found', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
       ]
 
       const toggled = toggleWidget(widgets, 'nonexistent')
@@ -297,7 +303,7 @@ describe('widgets utility functions', () => {
   describe('updateWidgetSettings', () => {
     it('should update weather widget settings', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
       ]
 
       const updated = updateWidgetSettings(widgets, '1', {
@@ -375,7 +381,7 @@ describe('widgets utility functions', () => {
 
     it('should not modify other widgets', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
         { id: '2', type: 'notes', enabled: true, order: 1, settings: { content: 'Original', maxLength: 500, quickJot: false } },
       ]
 
@@ -389,7 +395,7 @@ describe('widgets utility functions', () => {
 
     it('should return unchanged array if widget ID not found', () => {
       const widgets: WidgetConfig[] = [
-        { id: '1', type: 'weather', enabled: true, order: 0, settings: {} },
+        { id: '1', type: 'weather', enabled: true, order: 0, settings: { alertLevel: 'all' } },
       ]
 
       const updated = updateWidgetSettings(widgets, 'nonexistent', { test: 'value' })

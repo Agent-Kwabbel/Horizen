@@ -4,6 +4,7 @@ export type CurrentWeather = {
   temperature_2m: number
   apparent_temperature: number
   wind_speed_10m: number
+  wind_gusts_10m: number
   precipitation_probability: number
   precipitation: number
   rain: number
@@ -12,16 +13,54 @@ export type CurrentWeather = {
   cloud_cover: number
   is_day: 0 | 1
   weather_code: number
+  relative_humidity_2m: number
+  surface_pressure: number
+  visibility: number
+}
+
+export type HourlyWeather = {
+  temperature_2m: number[]
+  apparent_temperature: number[]
+  precipitation_probability: number[]
+  precipitation: number[]
+  weather_code: number[]
+  uv_index: number[]
+  wind_speed_10m: number[]
+  wind_gusts_10m: number[]
 }
 
 export type DailyWeather = {
   temperature_2m_max: number
   temperature_2m_min: number
+  apparent_temperature_max: number
+  apparent_temperature_min: number
+  precipitation_sum: number
+  precipitation_hours: number
+  weather_code: number
+  wind_speed_10m_max: number
+  wind_gusts_10m_max: number
+  uv_index_max: number
+}
+
+export type AirQuality = {
+  pm2_5: number
+  european_aqi_pm2_5: number
+  us_aqi_pm2_5: number
+  pm10: number
+  european_aqi_pm10: number
+  us_aqi_pm10: number
+  ozone: number
+  european_aqi_o3: number
+  us_aqi_o3: number
 }
 
 export type WeatherData = {
   current: CurrentWeather
+  hourly: HourlyWeather
   daily: DailyWeather
+  airQuality: AirQuality | null
+  latitude: number
+  longitude: number
 }
 
 type WeatherCache = {
@@ -42,8 +81,8 @@ export function getCachedWeather(key: string): WeatherData | null {
     const parsed = JSON.parse(raw) as WeatherCache
     if (Date.now() - parsed.t > TTL_MS) return null
 
-    // Validate the data structure has current and daily
-    if (!parsed.data || !parsed.data.current || !parsed.data.daily) {
+    // Validate the data structure has current, hourly, and daily
+    if (!parsed.data || !parsed.data.current || !parsed.data.hourly || !parsed.data.daily) {
       localStorage.removeItem(key)
       return null
     }
@@ -75,10 +114,16 @@ export async function fetchCurrentWeather(
   url.searchParams.set("longitude", String(lon))
   url.searchParams.set(
     "current",
-    "temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,precipitation,precipitation_probability,rain,showers,snowfall,cloud_cover"
+    "temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,rain,showers,snowfall,cloud_cover,relative_humidity_2m,surface_pressure,visibility"
   )
-  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min")
-  url.searchParams.set("forecast_days", "1")
+  url.searchParams.set(
+    "hourly",
+    "temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,uv_index,wind_speed_10m,wind_gusts_10m"
+  )
+  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_hours,weather_code,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max")
+  url.searchParams.set("forecast_days", "3")
+  url.searchParams.set("past_hours", "6")
+  url.searchParams.set("forecast_hours", "24")
   url.searchParams.set("timezone", "auto")
 
   url.searchParams.set("temperature_unit", units.temperature === "fahrenheit" ? "fahrenheit" : "celsius")
@@ -92,9 +137,29 @@ export async function fetchCurrentWeather(
   const res = await fetch(url.toString())
   const j = await res.json()
   const current = j.current as CurrentWeather
+
+  const hourly: HourlyWeather = {
+    temperature_2m: j.hourly.temperature_2m.slice(0, 30),
+    apparent_temperature: j.hourly.apparent_temperature.slice(0, 30),
+    precipitation_probability: j.hourly.precipitation_probability.slice(0, 30),
+    precipitation: j.hourly.precipitation.slice(0, 30),
+    weather_code: j.hourly.weather_code.slice(0, 30),
+    uv_index: j.hourly.uv_index.slice(0, 30),
+    wind_speed_10m: j.hourly.wind_speed_10m.slice(0, 30),
+    wind_gusts_10m: j.hourly.wind_gusts_10m.slice(0, 30),
+  }
+
   const daily: DailyWeather = {
     temperature_2m_max: j.daily.temperature_2m_max[0],
-    temperature_2m_min: j.daily.temperature_2m_min[0]
+    temperature_2m_min: j.daily.temperature_2m_min[0],
+    apparent_temperature_max: j.daily.apparent_temperature_max[0],
+    apparent_temperature_min: j.daily.apparent_temperature_min[0],
+    precipitation_sum: j.daily.precipitation_sum[0],
+    precipitation_hours: j.daily.precipitation_hours[0],
+    weather_code: j.daily.weather_code[0],
+    wind_speed_10m_max: j.daily.wind_speed_10m_max[0],
+    wind_gusts_10m_max: j.daily.wind_gusts_10m_max[0],
+    uv_index_max: j.daily.uv_index_max[0],
   }
 
   if (units.temperature === "kelvin") {
@@ -102,16 +167,54 @@ export async function fetchCurrentWeather(
     current.apparent_temperature = current.apparent_temperature + 273.15
     daily.temperature_2m_max = daily.temperature_2m_max + 273.15
     daily.temperature_2m_min = daily.temperature_2m_min + 273.15
+    daily.apparent_temperature_max = daily.apparent_temperature_max + 273.15
+    daily.apparent_temperature_min = daily.apparent_temperature_min + 273.15
+
+    hourly.temperature_2m = hourly.temperature_2m.map(t => t + 273.15)
+    hourly.apparent_temperature = hourly.apparent_temperature.map(t => t + 273.15)
+  }
+
+  let airQuality: AirQuality | null = null
+  try {
+    const aqUrl = new URL("https://air-quality.open-meteo.com/v1/air-quality")
+    aqUrl.searchParams.set("latitude", String(lat))
+    aqUrl.searchParams.set("longitude", String(lon))
+    aqUrl.searchParams.set("current", "pm2_5,european_aqi_pm2_5,us_aqi_pm2_5,pm10,european_aqi_pm10,us_aqi_pm10,ozone,european_aqi_o3,us_aqi_o3")
+
+    const aqRes = await fetch(aqUrl.toString())
+    const aqData = await aqRes.json()
+
+    if (aqData.current) {
+      airQuality = aqData.current as AirQuality
+    }
+  } catch {
+    // Air quality data is optional, continue without it
   }
 
   if (units.windSpeed === "knots") {
     current.wind_speed_10m = current.wind_speed_10m * 0.539957
+    current.wind_gusts_10m = current.wind_gusts_10m * 0.539957
+    daily.wind_speed_10m_max = daily.wind_speed_10m_max * 0.539957
+    daily.wind_gusts_10m_max = daily.wind_gusts_10m_max * 0.539957
+    hourly.wind_speed_10m = hourly.wind_speed_10m.map(w => w * 0.539957)
+    hourly.wind_gusts_10m = hourly.wind_gusts_10m.map(w => w * 0.539957)
   } else if (units.windSpeed === "beaufort") {
-    // Convert m/s to Beaufort scale
     current.wind_speed_10m = getBeaufortScale(current.wind_speed_10m)
+    current.wind_gusts_10m = getBeaufortScale(current.wind_gusts_10m)
+    daily.wind_speed_10m_max = getBeaufortScale(daily.wind_speed_10m_max)
+    daily.wind_gusts_10m_max = getBeaufortScale(daily.wind_gusts_10m_max)
+    hourly.wind_speed_10m = hourly.wind_speed_10m.map(w => getBeaufortScale(w))
+    hourly.wind_gusts_10m = hourly.wind_gusts_10m.map(w => getBeaufortScale(w))
   }
 
-  return { current, daily }
+  return {
+    current,
+    hourly,
+    daily,
+    airQuality,
+    latitude: lat,
+    longitude: lon
+  }
 }
 
 export function getWeatherIcon(weather: CurrentWeather): string {

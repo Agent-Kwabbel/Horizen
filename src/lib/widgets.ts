@@ -347,7 +347,18 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
     enabled: true,
     order: 0,
     settings: {
+      unitSystem: "metric",
       alertLevel: "all",
+      alertTypes: {
+        wind: true,
+        temperature: true,
+        precipitation: true,
+        snow: true,
+        thunderstorm: true,
+        visibility: true,
+        uv: true,
+        airQuality: true,
+      },
     },
   },
   {

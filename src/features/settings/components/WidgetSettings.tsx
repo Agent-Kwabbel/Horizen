@@ -43,16 +43,29 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
   const handleDelete = (id: string) => {
     setPrefs((p) => ({
       ...p,
-      widgets: p.widgets.filter((w) => w.id !== id),
+      widgets: p.widgets.map((w) =>
+        w.id === id ? { ...w, enabled: false } : w
+      ),
     }))
   }
 
   const handleAddWidget = (type: WidgetType) => {
-    const newWidget = createDefaultWidget(type, prefs.widgets.length)
-    setPrefs((p) => ({
-      ...p,
-      widgets: [...p.widgets, newWidget],
-    }))
+    const existingWidget = prefs.widgets.find((w) => w.type === type)
+
+    if (existingWidget) {
+      setPrefs((p) => ({
+        ...p,
+        widgets: p.widgets.map((w) =>
+          w.type === type ? { ...w, enabled: true } : w
+        ),
+      }))
+    } else {
+      const newWidget = createDefaultWidget(type, prefs.widgets.length)
+      setPrefs((p) => ({
+        ...p,
+        widgets: [...p.widgets, newWidget],
+      }))
+    }
   }
 
   const handleReorder = (widgetId: string, direction: "up" | "down") => {
@@ -158,10 +171,14 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
   }
 
   const availableTypes = Object.keys(WIDGET_REGISTRY) as WidgetType[]
-  const usedTypes = new Set(prefs.widgets.map((w) => w.type))
+  const disabledWidgets = prefs.widgets.filter((w) => !w.enabled)
+  const disabledTypes = new Set(disabledWidgets.map((w) => w.type))
+  const enabledTypes = new Set(prefs.widgets.filter((w) => w.enabled).map((w) => w.type))
 
-  // All widgets are singletons - only show types that aren't already added
-  const availableToAdd = availableTypes.filter((type) => !usedTypes.has(type))
+  // Show disabled widgets and types that have never been added
+  const availableToAdd = availableTypes.filter((type) =>
+    disabledTypes.has(type) || !enabledTypes.has(type)
+  )
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -176,13 +193,13 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
         <div className="px-6 pb-6 space-y-6">
           <div>
             <h3 className="text-sm font-medium mb-3">Active Widgets</h3>
-            {prefs.widgets.length === 0 ? (
+            {prefs.widgets.filter((w) => w.enabled).length === 0 ? (
               <div className="text-sm text-white/50 py-8 text-center">
                 No widgets added yet. Add one below!
               </div>
             ) : (
               <div className="space-y-2">
-                {prefs.widgets.map((widget, index) => {
+                {prefs.widgets.filter((w) => w.enabled).map((widget, index) => {
                   const Icon = WIDGET_ICONS[widget.type]
                   const metadata = WIDGET_REGISTRY[widget.type]
                   const isExpanded = expandedWidget === widget.id

@@ -5,6 +5,7 @@ import WeatherWidget from "./WeatherWidget"
 import NotesWidget from "./NotesWidget"
 import QuoteWidget from "./QuoteWidget"
 import TickerWidget from "./TickerWidget"
+import PomodoroWidget from "./PomodoroWidget"
 
 type WidgetRendererProps = {
   widget: WidgetConfig
@@ -20,6 +21,8 @@ function WidgetRenderer({ widget }: WidgetRendererProps) {
       return <QuoteWidget config={widget} />
     case "ticker":
       return <TickerWidget config={widget} />
+    case "pomodoro":
+      return <PomodoroWidget config={widget} />
     default:
       return null
   }

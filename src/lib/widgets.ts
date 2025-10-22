@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const WidgetTypeSchema = z.enum(["weather", "notes", "quote", "ticker"])
+export const WidgetTypeSchema = z.enum(["weather", "notes", "quote", "ticker", "pomodoro"])
 export type WidgetType = z.infer<typeof WidgetTypeSchema>
 
 export const BaseWidgetConfigSchema = z.object({
@@ -58,6 +58,13 @@ export const TickerWidgetSettingsSchema = z.object({
   symbols: z.array(TickerSymbolSchema).default([]),
 })
 
+export const PomodoroWidgetSettingsSchema = z.object({
+  pomodoroDuration: z.number().default(25 * 60),
+  shortBreakDuration: z.number().default(5 * 60),
+  longBreakDuration: z.number().default(15 * 60),
+  notificationSound: z.boolean().default(true),
+})
+
 export type TickerSymbol = z.infer<typeof TickerSymbolSchema>
 
 export const WeatherWidgetConfigSchema = BaseWidgetConfigSchema.extend({
@@ -80,17 +87,24 @@ export const TickerWidgetConfigSchema = BaseWidgetConfigSchema.extend({
   settings: TickerWidgetSettingsSchema,
 })
 
+export const PomodoroWidgetConfigSchema = BaseWidgetConfigSchema.extend({
+  type: z.literal("pomodoro"),
+  settings: PomodoroWidgetSettingsSchema,
+})
+
 export const WidgetConfigSchema = z.discriminatedUnion("type", [
   WeatherWidgetConfigSchema,
   NotesWidgetConfigSchema,
   QuoteWidgetConfigSchema,
   TickerWidgetConfigSchema,
+  PomodoroWidgetConfigSchema,
 ])
 
 export type WeatherWidgetConfig = z.infer<typeof WeatherWidgetConfigSchema>
 export type NotesWidgetConfig = z.infer<typeof NotesWidgetConfigSchema>
 export type QuoteWidgetConfig = z.infer<typeof QuoteWidgetConfigSchema>
 export type TickerWidgetConfig = z.infer<typeof TickerWidgetConfigSchema>
+export type PomodoroWidgetConfig = z.infer<typeof PomodoroWidgetConfigSchema>
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>
 
 export type UnitSystem = "metric" | "imperial" | "scientific" | "custom"
@@ -234,6 +248,18 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
       symbols: [],
     },
   },
+  pomodoro: {
+    type: "pomodoro",
+    name: "Pomodoro Timer",
+    description: "Stay focused with the Pomodoro Technique",
+    icon: "timer",
+    defaultSettings: {
+      pomodoroDuration: 25 * 60,
+      shortBreakDuration: 5 * 60,
+      longBreakDuration: 15 * 60,
+      notificationSound: true,
+    },
+  },
 }
 
 export function createDefaultWidget(type: WidgetType, order: number = 0): WidgetConfig {
@@ -272,6 +298,14 @@ export function createDefaultWidget(type: WidgetType, order: number = 0): Widget
         enabled: true,
         order,
         settings: metadata.defaultSettings as TickerWidgetConfig["settings"],
+      }
+    case "pomodoro":
+      return {
+        id: baseId,
+        type: "pomodoro",
+        enabled: true,
+        order,
+        settings: metadata.defaultSettings as PomodoroWidgetConfig["settings"],
       }
   }
 }
@@ -336,6 +370,11 @@ export function updateWidgetSettings(
           ...widget,
           settings: { ...widget.settings, ...settings },
         } as TickerWidgetConfig
+      case "pomodoro":
+        return {
+          ...widget,
+          settings: { ...widget.settings, ...settings },
+        } as PomodoroWidgetConfig
       default:
         return widget
     }

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, TickerSymbol, UnitSystem } from "@/lib/widgets"
+import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, PomodoroWidgetConfig, TickerSymbol, UnitSystem } from "@/lib/widgets"
 import { WIDGET_REGISTRY, createDefaultWidget, reorderWidgets, updateWidgetSettings, getUnitsForSystem, detectUnitSystem } from "@/lib/widgets"
 import {
   Sheet,
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ChevronUp, ChevronDown, Trash2, Plus, Cloud, StickyNote, Quote, TrendingUp, X, Coins, HelpCircle } from "lucide-react"
+import { ChevronUp, ChevronDown, Trash2, Plus, Cloud, StickyNote, Quote, TrendingUp, X, Coins, HelpCircle, Timer } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 type WidgetSettingsProps = {
@@ -33,12 +33,14 @@ const WIDGET_ICONS = {
   notes: StickyNote,
   quote: Quote,
   ticker: TrendingUp,
+  pomodoro: Timer,
 }
 
 export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsProps) {
   const { prefs, setPrefs } = usePrefs()
   const [expandedWidget, setExpandedWidget] = useState<string | null>(null)
   const [tickerType, setTickerType] = useState<"stock" | "crypto">("stock")
+  const [notificationRequested, setNotificationRequested] = useState(false)
 
   const handleDelete = (id: string) => {
     setPrefs((p) => ({
@@ -251,7 +253,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
                         </div>
 
-                        {(widget.type === "weather" || widget.type === "notes" || widget.type === "ticker") && (
+                        {(widget.type === "weather" || widget.type === "notes" || widget.type === "ticker" || widget.type === "pomodoro") && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -504,6 +506,155 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                   )
                                 })}
                               </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {isExpanded && widget.type === "pomodoro" && (
+                        <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
+                          <div>
+                            <Label htmlFor={`pomodoro-duration-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              Pomodoro Duration (minutes)
+                            </Label>
+                            <Input
+                              id={`pomodoro-duration-${widget.id}`}
+                              type="number"
+                              min="1"
+                              max="120"
+                              value={Math.floor((widget as PomodoroWidgetConfig).settings.pomodoroDuration / 60)}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 25
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    pomodoroDuration: value * 60,
+                                  }),
+                                }))
+                              }}
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`short-break-duration-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              Short Break Duration (minutes)
+                            </Label>
+                            <Input
+                              id={`short-break-duration-${widget.id}`}
+                              type="number"
+                              min="1"
+                              max="60"
+                              value={Math.floor((widget as PomodoroWidgetConfig).settings.shortBreakDuration / 60)}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 5
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    shortBreakDuration: value * 60,
+                                  }),
+                                }))
+                              }}
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`long-break-duration-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              Long Break Duration (minutes)
+                            </Label>
+                            <Input
+                              id={`long-break-duration-${widget.id}`}
+                              type="number"
+                              min="1"
+                              max="120"
+                              value={Math.floor((widget as PomodoroWidgetConfig).settings.longBreakDuration / 60)}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value) || 15
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    longBreakDuration: value * 60,
+                                  }),
+                                }))
+                              }}
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor={`notification-sound-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                              Notification Sound
+                            </Label>
+                            <Switch
+                              id={`notification-sound-${widget.id}`}
+                              checked={(widget as PomodoroWidgetConfig).settings.notificationSound !== false}
+                              onCheckedChange={(checked) => {
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    notificationSound: checked,
+                                  }),
+                                }))
+                              }}
+                            />
+                          </div>
+
+                          {"Notification" in window && (
+                            <div className="space-y-2">
+                              <div className="p-3 rounded-lg border border-white/10 bg-white/5">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium mb-1">
+                                      Browser Notifications
+                                    </div>
+                                    <div className="text-xs text-white/70">
+                                      {Notification.permission === "granted" && (
+                                        "Notifications are enabled"
+                                      )}
+                                      {Notification.permission === "denied" && (
+                                        "Notifications are blocked. Enable them in your browser settings."
+                                      )}
+                                      {Notification.permission === "default" && !notificationRequested && (
+                                        "Your browser needs permission to show notifications for timer alerts"
+                                      )}
+                                      {Notification.permission === "default" && notificationRequested && (
+                                        "Please allow notifications in your browser prompt"
+                                      )}
+                                    </div>
+                                  </div>
+                                  {Notification.permission === "granted" && (
+                                    <div className="flex items-center gap-1.5 text-green-400 text-xs font-medium">
+                                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                                      Enabled
+                                    </div>
+                                  )}
+                                  {Notification.permission === "denied" && (
+                                    <div className="flex items-center gap-1.5 text-red-400 text-xs font-medium">
+                                      <div className="w-2 h-2 rounded-full bg-red-400" />
+                                      Blocked
+                                    </div>
+                                  )}
+                                  {Notification.permission === "default" && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-xs text-white/70 hover:text-white hover:bg-white/10 h-7 px-2"
+                                      onClick={() => {
+                                        setNotificationRequested(true)
+                                        Notification.requestPermission()
+                                      }}
+                                    >
+                                      Enable
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                              {notificationRequested && Notification.permission === "default" && (
+                                <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 text-xs text-blue-200">
+                                  After allowing notifications in your browser, please refresh the page to see the updated status.
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

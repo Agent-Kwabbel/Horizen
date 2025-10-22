@@ -18,7 +18,7 @@ export function usePomodoroTimer({
   const [mode, setMode] = useState<TimerMode>("pomodoro")
   const [timeLeft, setTimeLeft] = useState(pomodoroDuration)
   const [isRunning, setIsRunning] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<number | null>(null)
 
   const getDuration = useCallback(
     (timerMode: TimerMode) => {

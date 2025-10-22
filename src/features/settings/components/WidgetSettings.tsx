@@ -117,6 +117,15 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
     }))
   }
 
+  const handleWeatherSettingChange = (widgetId: string, field: string, value: string) => {
+    setPrefs((p) => ({
+      ...p,
+      widgets: updateWidgetSettings(p.widgets, widgetId, {
+        [field]: value,
+      }),
+    }))
+  }
+
   const handleWeatherAlertLevelChange = (widgetId: string, value: string) => {
     setPrefs((p) => ({
       ...p,
@@ -407,6 +416,25 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               </div>
                             </>
                           )}
+
+                          <div>
+                            <Label htmlFor={`forecast-display-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              24H Forecast Display
+                            </Label>
+                            <Select
+                              value={(widget as WeatherWidgetConfig).settings.forecastDisplay || "expanded"}
+                              onValueChange={(v) => handleWeatherSettingChange(widget.id, "forecastDisplay", v)}
+                            >
+                              <SelectTrigger id={`forecast-display-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-black/90 text-white border-white/10">
+                                <SelectItem value="expanded">Show when expanded (default)</SelectItem>
+                                <SelectItem value="always">Always visible</SelectItem>
+                                <SelectItem value="never">Never show</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
 
                           <div>
                             <div className="flex items-center gap-2 mb-2">

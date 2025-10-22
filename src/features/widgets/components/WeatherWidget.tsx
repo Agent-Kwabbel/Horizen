@@ -117,6 +117,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
     localStorage.setItem(`weather-expanded-${config.id}`, String(newExpanded))
   }
   const units = config.settings.units || DEFAULT_UNITS
+  const forecastDisplay = config.settings.forecastDisplay || "expanded"
   const alertLevel = config.settings.alertLevel || "all"
   const alertTypes = config.settings.alertTypes
   const {
@@ -135,6 +136,89 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
   const allAlerts = weather ? detectWeatherAlerts(weather) : []
   const filteredByLevel = filterAlertsByLevel(allAlerts, alertLevel)
   const alerts = filterAlertsByType(filteredByLevel, alertTypes)
+
+  const renderForecast = (showDivider: boolean = false) => {
+    if (!weather || forecastDisplay === "never") return null
+
+    const now = new Date()
+    const currentHour = now.getHours()
+
+    const hourlyForecast = Array.from({ length: 25 }, (_, i) => {
+      const hour = (currentHour + i) % 24
+      const isNow = i === 0
+
+      const tempCelsius = isNow ? weather.current.temperature_2m : weather.hourly.temperature_2m[i]
+      const formattedTemp = formatTemperature(tempCelsius, units.temperature)
+      const temp = formattedTemp.replace('°C', '').replace('°F', '').replace('K', '')
+      const degreeSymbol = units.temperature === 'kelvin' ? '' : '°'
+      const precipitation = isNow ? weather.current.precipitation_probability : (weather.hourly.precipitation_probability?.[i] || 0)
+      const weatherCode = isNow ? weather.current.weather_code : weather.hourly.weather_code[i]
+
+      const mockWeather = {
+        weather_code: weatherCode,
+        is_day: weather.current.is_day,
+        temperature_2m: isNow ? weather.current.temperature_2m : weather.hourly.temperature_2m[i],
+        apparent_temperature: isNow ? weather.current.apparent_temperature : weather.hourly.apparent_temperature[i],
+        wind_speed_10m: isNow ? weather.current.wind_speed_10m : weather.hourly.wind_speed_10m[i],
+        wind_gusts_10m: isNow ? weather.current.wind_gusts_10m : weather.hourly.wind_gusts_10m[i],
+        wind_direction_10m: 0,
+        precipitation_probability: precipitation,
+        precipitation: isNow ? weather.current.precipitation : weather.hourly.precipitation[i],
+        rain: 0,
+        showers: 0,
+        snowfall: 0,
+        visibility: 10000,
+        cloud_cover: 0,
+        relative_humidity_2m: 0,
+        surface_pressure: 0,
+      }
+
+      return {
+        hour,
+        temp,
+        degreeSymbol,
+        precipitation,
+        mockWeather,
+        isNow,
+      }
+    })
+
+    return (
+      <div className={showDivider ? "mt-3 pt-3 border-t border-white/20" : ""}>
+        <div className={`flex gap-3 overflow-x-auto scrollbar-hide ${forecastDisplay === "always" ? "pt-2" : "pb-2"}`}>
+          {hourlyForecast.map((forecast, index) => {
+            const iconName = getWeatherIcon(forecast.mockWeather as any)
+            const showPrecip = forecast.precipitation > 5
+
+            return (
+              <div
+                key={index}
+                className="flex flex-col items-center min-w-[3rem] flex-shrink-0"
+              >
+                <div className="text-xs text-white/70">
+                  {forecast.isNow ? 'Now' : `${forecast.hour.toString().padStart(2, '0')}`}
+                </div>
+
+                <div className={`flex flex-col items-center justify-center flex-1 ${showPrecip ? 'gap-0' : ''}`}>
+                  <WeatherIcon icon={iconName} size={24} />
+
+                  {showPrecip && (
+                    <div className="text-[10px] text-blue-400 -mt-0.5">
+                      {forecast.precipitation}%
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-sm font-medium">
+                  {forecast.temp}{forecast.degreeSymbol}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] overflow-hidden py-0 shrink-0">
@@ -189,7 +273,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
             )}
           </div>
 
-          <div className="flex flex-col items-end justify-center gap-2 shrink-0 self-stretch">
+          <div className="flex flex-col items-end justify-center gap-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
@@ -243,6 +327,8 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
           </div>
         </div>
 
+        {forecastDisplay === "always" && renderForecast(true)}
+
         {coords && (
           <button
             onClick={toggleExpanded}
@@ -266,7 +352,9 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
             }}
           >
             <div className="mt-2 space-y-2 text-xs">
-              <div className="flex flex-col gap-2">
+              {forecastDisplay === "expanded" && renderForecast(false)}
+
+              <div className={`flex flex-col gap-2 ${forecastDisplay === "expanded" ? "mt-3 pt-3 border-t border-white/20" : ""}`}>
               <div className="flex items-center gap-2">
                 <WeatherIcon icon={getWindBeaufortIcon(weather.current.wind_speed_10m, units.windSpeed)} size={18} />
                 <span className="text-white/70">Wind Speed/Force</span>

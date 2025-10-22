@@ -24,6 +24,7 @@ export const WeatherWidgetSettingsSchema = z.object({
     visibility: z.enum(["km", "miles"]).default("km"),
     pressure: z.enum(["hpa", "mb", "inhg", "atm"]).default("hpa"),
   }).optional(),
+  forecastDisplay: z.enum(["always", "expanded", "never"]).default("expanded"),
   alertLevel: z.enum(["none", "warnings-only", "watch-and-warnings", "all"]).default("all"),
   alertTypes: z.object({
     wind: z.boolean().default(true),
@@ -189,6 +190,7 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
     icon: "cloud",
     defaultSettings: {
       unitSystem: "metric",
+      forecastDisplay: "expanded",
       alertLevel: "all",
       alertTypes: {
         wind: true,
@@ -348,6 +350,7 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
     order: 0,
     settings: {
       unitSystem: "metric",
+      forecastDisplay: "expanded",
       alertLevel: "all",
       alertTypes: {
         wind: true,

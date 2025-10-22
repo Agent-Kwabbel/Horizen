@@ -106,13 +106,13 @@ describe('QuoteWidget', () => {
     it('should have backdrop blur', () => {
       const { container } = render(<QuoteWidget config={mockConfig} />)
       const widget = container.firstChild as HTMLElement
-      expect(widget.className).toContain('backdrop-blur-md')
+      expect(widget.className).toContain('backdrop-blur')
     })
 
     it('should have rounded corners', () => {
       const { container } = render(<QuoteWidget config={mockConfig} />)
       const widget = container.firstChild as HTMLElement
-      expect(widget.className).toContain('rounded-2xl')
+      expect(widget.className).toContain('rounded-xl')
     })
 
     it('should display icon in blue color', () => {

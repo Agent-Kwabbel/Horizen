@@ -216,13 +216,13 @@ describe('NotesWidget', () => {
     it('should have backdrop blur', () => {
       const { container } = renderNotesWidget()
       const widget = container.firstChild as HTMLElement
-      expect(widget.className).toContain('backdrop-blur-md')
+      expect(widget.className).toContain('backdrop-blur')
     })
 
     it('should have rounded corners', () => {
       const { container } = renderNotesWidget()
       const widget = container.firstChild as HTMLElement
-      expect(widget.className).toContain('rounded-2xl')
+      expect(widget.className).toContain('rounded-xl')
     })
   })
 

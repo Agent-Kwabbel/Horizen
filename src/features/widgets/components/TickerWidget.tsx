@@ -15,7 +15,7 @@ export default function TickerWidget({ config }: TickerWidgetProps) {
 
   if (config.settings.symbols.length === 0) {
     return (
-      <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem]">
+      <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] shrink-0">
         <CardContent className="p-4">
           <div className="text-sm text-white/60 text-center py-2">
             No tickers configured
@@ -26,7 +26,7 @@ export default function TickerWidget({ config }: TickerWidgetProps) {
   }
 
   return (
-    <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] py-0">
+    <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] py-0 shrink-0">
       <CardContent className="p-3">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">

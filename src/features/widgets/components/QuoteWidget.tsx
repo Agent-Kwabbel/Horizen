@@ -13,7 +13,7 @@ export default function QuoteWidget({ config }: QuoteWidgetProps) {
   )
 
   return (
-    <div className="bg-black/35 backdrop-blur-md rounded-2xl p-4 text-white w-[18rem]">
+    <div className="bg-black/35 backdrop-blur-md rounded-2xl p-4 text-white w-[18rem] shrink-0">
       <div className="flex items-start gap-3">
         <Quote className="w-5 h-5 text-blue-400 flex-shrink-0 mt-1" />
         <div>

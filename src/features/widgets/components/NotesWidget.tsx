@@ -36,7 +36,7 @@ export default function NotesWidget({ config }: NotesWidgetProps) {
   }
 
   return (
-    <div className="bg-black/35 backdrop-blur-md rounded-2xl p-4 text-white w-[18rem]">
+    <div className="bg-black/35 backdrop-blur-md rounded-2xl p-4 text-white w-[18rem] shrink-0">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <StickyNote className="w-4 h-4 text-yellow-400" />

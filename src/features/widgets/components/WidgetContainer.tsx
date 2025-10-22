@@ -34,8 +34,8 @@ export default function WidgetContainer() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-10 pointer-events-none">
-      <div className="flex flex-col items-end gap-4 max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide pointer-events-auto">
+    <div className="fixed top-4 right-4 bottom-24 z-10 flex flex-col items-end pointer-events-none">
+      <div className="flex flex-col items-end gap-4 h-full overflow-y-auto scrollbar-hide pointer-events-auto pr-1 pb-4">
         {enabledWidgets.map((widget) => (
           <WidgetRenderer key={widget.id} widget={widget} />
         ))}

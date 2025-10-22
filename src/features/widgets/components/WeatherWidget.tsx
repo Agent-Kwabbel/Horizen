@@ -137,7 +137,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
   const alerts = filterAlertsByType(filteredByLevel, alertTypes)
 
   return (
-    <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] overflow-hidden py-0">
+    <Card className="bg-black/35 backdrop-blur border-white/10 text-white w-[18rem] overflow-hidden py-0 shrink-0">
       <CardContent className={`p-4 ${alerts.length > 0 ? 'pb-0' : ''}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

@@ -23,6 +23,7 @@ export default function DevModeOverlay() {
   const [overrideFeelsLike, setOverrideFeelsLike] = useState("")
   const [overrideWind, setOverrideWind] = useState("")
   const [overrideWindGusts, setOverrideWindGusts] = useState("")
+  const [overrideWindDir, setOverrideWindDir] = useState("")
   const [overrideVisibility, setOverrideVisibility] = useState("")
   const [overridePrecipProb, setOverridePrecipProb] = useState("")
   const [overridePrecip, setOverridePrecip] = useState("")
@@ -33,6 +34,18 @@ export default function DevModeOverlay() {
   const [overrideUVIndex, setOverrideUVIndex] = useState("")
   const [overridePM25, setOverridePM25] = useState("")
   const [overrideOzone, setOverrideOzone] = useState("")
+  const [overrideHumidity, setOverrideHumidity] = useState("")
+  const [overridePressure, setOverridePressure] = useState("")
+  const [overrideCloudCover, setOverrideCloudCover] = useState("")
+  const [overrideIsDay, setOverrideIsDay] = useState("")
+  const [overrideSunrise, setOverrideSunrise] = useState("")
+  const [overrideSunset, setOverrideSunset] = useState("")
+
+  // Moon override controls
+  const [overrideMoonPhase, setOverrideMoonPhase] = useState("")
+  const [overrideMoonIllumination, setOverrideMoonIllumination] = useState("")
+  const [overrideMoonrise, setOverrideMoonrise] = useState("")
+  const [overrideMoonset, setOverrideMoonset] = useState("")
 
   // Ticker widget dev controls
   const [tickerIndex, setTickerIndex] = useState("")
@@ -160,17 +173,24 @@ export default function DevModeOverlay() {
     if (overrideFeelsLike) weatherData.current.apparent_temperature = parseFloat(overrideFeelsLike)
     if (overrideWind) weatherData.current.wind_speed_10m = parseFloat(overrideWind)
     if (overrideWindGusts) weatherData.current.wind_gusts_10m = parseFloat(overrideWindGusts)
+    if (overrideWindDir) weatherData.current.wind_direction_10m = parseFloat(overrideWindDir)
     if (overrideVisibility) weatherData.current.visibility = parseFloat(overrideVisibility)
     if (overridePrecipProb) weatherData.current.precipitation_probability = parseFloat(overridePrecipProb)
     if (overridePrecip) weatherData.current.precipitation = parseFloat(overridePrecip)
     if (overrideSnowfall) weatherData.current.snowfall = parseFloat(overrideSnowfall)
     if (overrideWeatherCode) weatherData.current.weather_code = parseInt(overrideWeatherCode)
+    if (overrideHumidity) weatherData.current.relative_humidity_2m = parseFloat(overrideHumidity)
+    if (overridePressure) weatherData.current.surface_pressure = parseFloat(overridePressure)
+    if (overrideCloudCover) weatherData.current.cloud_cover = parseFloat(overrideCloudCover)
+    if (overrideIsDay) weatherData.current.is_day = parseInt(overrideIsDay) as 0 | 1
 
     // Apply overrides to daily weather
     if (overrideTempMax) weatherData.daily.temperature_2m_max = parseFloat(overrideTempMax)
     if (overrideTempMin) weatherData.daily.temperature_2m_min = parseFloat(overrideTempMin)
     if (overrideWindGusts) weatherData.daily.wind_gusts_10m_max = parseFloat(overrideWindGusts)
     if (overrideUVIndex) weatherData.daily.uv_index_max = parseFloat(overrideUVIndex)
+    if (overrideSunrise) weatherData.daily.sunrise = overrideSunrise
+    if (overrideSunset) weatherData.daily.sunset = overrideSunset
 
     // Apply overrides to air quality
     if (overridePM25) weatherData.airQuality.pm2_5 = parseFloat(overridePM25)
@@ -186,6 +206,47 @@ export default function DevModeOverlay() {
     window.location.reload()
   }
 
+  const handleOverrideMoonData = (widgetId: string) => {
+    const widget = prefs.widgets.find((w) => w.id === widgetId)
+    if (!widget || widget.type !== "weather") return
+
+    const location = (widget as WeatherWidgetConfig).settings.location
+    if (!location) {
+      alert("Set a location first")
+      return
+    }
+
+    const moonCacheKey = `moon:cache:${location.latitude.toFixed(2)},${location.longitude.toFixed(2)}`
+
+    const getMoonIcon = (phase: string): string => {
+      const p = phase.toLowerCase()
+      if (p.includes('new')) return 'moon-new'
+      if (p.includes('waxing crescent')) return 'moon-waxing-crescent'
+      if (p.includes('first quarter')) return 'moon-first-quarter'
+      if (p.includes('waxing gibbous')) return 'moon-waxing-gibbous'
+      if (p.includes('full')) return 'moon-full'
+      if (p.includes('waning gibbous')) return 'moon-waning-gibbous'
+      if (p.includes('last quarter')) return 'moon-last-quarter'
+      if (p.includes('waning crescent')) return 'moon-waning-crescent'
+      return 'moon-new'
+    }
+
+    const phase = overrideMoonPhase || 'Full Moon'
+    const moonData = {
+      phase,
+      phaseIcon: getMoonIcon(phase),
+      illumination: parseFloat(overrideMoonIllumination) || 100,
+      moonrise: overrideMoonrise || '18:00',
+      moonset: overrideMoonset || '06:00',
+    }
+
+    localStorage.setItem(moonCacheKey, JSON.stringify({
+      t: Date.now(),
+      data: moonData,
+    }))
+
+    window.location.reload()
+  }
 
   const handleResetPrefs = () => {
     if (confirm("Reset all preferences to default? This will reload the page.")) {
@@ -501,6 +562,18 @@ export default function DevModeOverlay() {
                                 </div>
                               </div>
 
+                              <div className="space-y-2">
+                                <Label className="text-xs text-white/70">Wind Direction (°)</Label>
+                                <Input
+                                  type="number"
+                                  step="1"
+                                  value={overrideWindDir}
+                                  onChange={(e) => setOverrideWindDir(e.target.value)}
+                                  placeholder="0-360 (e.g., 180=South)"
+                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                />
+                              </div>
+
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-2">
                                   <Label className="text-xs text-white/70">Precip Prob (%)</Label>
@@ -551,6 +624,56 @@ export default function DevModeOverlay() {
                                 </div>
                               </div>
 
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Humidity (%)</Label>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    value={overrideHumidity}
+                                    onChange={(e) => setOverrideHumidity(e.target.value)}
+                                    placeholder="0-100"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Pressure (hPa)</Label>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    value={overridePressure}
+                                    onChange={(e) => setOverridePressure(e.target.value)}
+                                    placeholder="e.g., 1013"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Cloud Cover (%)</Label>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    value={overrideCloudCover}
+                                    onChange={(e) => setOverrideCloudCover(e.target.value)}
+                                    placeholder="0-100"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Is Day (0/1)</Label>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    value={overrideIsDay}
+                                    onChange={(e) => setOverrideIsDay(e.target.value)}
+                                    placeholder="0=Night, 1=Day"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
                               <div className="space-y-2">
                                 <Label className="text-xs text-white/70">UV Index (0-15)</Label>
                                 <Input
@@ -588,11 +711,95 @@ export default function DevModeOverlay() {
                                 </div>
                               </div>
 
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Sunrise (HH:MM)</Label>
+                                  <Input
+                                    type="text"
+                                    value={overrideSunrise}
+                                    onChange={(e) => setOverrideSunrise(e.target.value)}
+                                    placeholder="e.g., 06:30"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Sunset (HH:MM)</Label>
+                                  <Input
+                                    type="text"
+                                    value={overrideSunset}
+                                    onChange={(e) => setOverrideSunset(e.target.value)}
+                                    placeholder="e.g., 18:30"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
                               <Button
                                 onClick={() => handleOverrideWeatherData(widget.id)}
                                 className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 h-8 text-sm"
                               >
-                                Apply Override (Reloads Page)
+                                Apply Weather Override (Reloads Page)
+                              </Button>
+                            </div>
+
+                            {/* Moon Data Override Section */}
+                            <div className="space-y-3 pt-3 border-t border-white/10">
+                              <div className="text-xs font-mono text-yellow-500">OVERRIDE MOON DATA</div>
+                              <div className="text-xs text-white/40">
+                                Override moon phase information. Phase names: New Moon, Waxing Crescent, First Quarter, Waxing Gibbous, Full Moon, Waning Gibbous, Last Quarter, Waning Crescent
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs text-white/70">Moon Phase</Label>
+                                <Input
+                                  type="text"
+                                  value={overrideMoonPhase}
+                                  onChange={(e) => setOverrideMoonPhase(e.target.value)}
+                                  placeholder="e.g., Full Moon"
+                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs text-white/70">Illumination (%)</Label>
+                                <Input
+                                  type="number"
+                                  step="1"
+                                  value={overrideMoonIllumination}
+                                  onChange={(e) => setOverrideMoonIllumination(e.target.value)}
+                                  placeholder="0-100"
+                                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Moonrise (HH:MM)</Label>
+                                  <Input
+                                    type="text"
+                                    value={overrideMoonrise}
+                                    onChange={(e) => setOverrideMoonrise(e.target.value)}
+                                    placeholder="e.g., 18:00"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs text-white/70">Moonset (HH:MM)</Label>
+                                  <Input
+                                    type="text"
+                                    value={overrideMoonset}
+                                    onChange={(e) => setOverrideMoonset(e.target.value)}
+                                    placeholder="e.g., 06:00"
+                                    className="bg-white/5 border-white/10 text-white text-sm h-8"
+                                  />
+                                </div>
+                              </div>
+
+                              <Button
+                                onClick={() => handleOverrideMoonData(widget.id)}
+                                className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/50 h-8 text-sm"
+                              >
+                                Apply Moon Override (Reloads Page)
                               </Button>
                             </div>
 

@@ -1,4 +1,4 @@
-import { useId, useState, useEffect } from "react"
+import { useId, useState, useEffect, useRef } from "react"
 import { usePrefs, BUILTIN_SEARCH_ENGINES } from "@/lib/prefs"
 import type { QuickLink, SearchEngine } from "@/lib/prefs"
 import { getApiKeys, saveApiKeys, migrateFromPlaintext, reencryptApiKeys } from "@/lib/api-keys"
@@ -37,6 +37,7 @@ import SettingsAbout from "./SettingsAbout"
 import SettingsApiKeys from "./SettingsApiKeys"
 import SettingsSecurity from "./SettingsSecurity"
 import SettingsQuickLinks from "./SettingsQuickLinks"
+import SettingsSearch from "./SettingsSearch"
 import { isSessionUnlocked, lockSession, isPasswordProtectionEnabled, disablePasswordProtection, getDerivedKey } from "@/lib/password"
 import { toast } from "sonner"
 
@@ -49,6 +50,7 @@ type SettingsFabProps = {
 export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: SettingsFabProps = {}) {
   const { prefs, setPrefs } = usePrefs()
   const newId = useId()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const [apiKeys, setApiKeys] = useState<{ openai?: string; anthropic?: string; gemini?: string }>({})
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
@@ -63,6 +65,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
     enabled: isPasswordProtectionEnabled(),
     unlocked: isSessionUnlocked()
   })
+  const [highlightedSection, setHighlightedSection] = useState<string | null>(null)
 
   const loadApiKeys = async () => {
     try {
@@ -150,6 +153,15 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
   const removeCustomSearchEngine = (id: string) =>
     setPrefs((p) => ({ ...p, customSearchEngines: p.customSearchEngines.filter((e) => e.id !== id) }))
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element && scrollContainerRef.current) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setHighlightedSection(sectionId)
+      setTimeout(() => setHighlightedSection(null), 2000)
+    }
+  }
+
   const allSearchEngines = [...BUILTIN_SEARCH_ENGINES, ...prefs.customSearchEngines]
 
   return (
@@ -175,9 +187,18 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             <SheetTitle>Settings</SheetTitle>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-5 pb-5">
+          <div className="px-5 shrink-0">
+            <SettingsSearch
+              onResultClick={scrollToSection}
+              widgets={prefs.widgets}
+              securityEnabled={securityStatus.enabled}
+              securityUnlocked={securityStatus.unlocked}
+            />
+          </div>
+
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-5 pb-5">
             <div className="space-y-6">
-            <div>
+            <div id="search-engine" className={`transition-all duration-300 ${highlightedSection === 'search-engine' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-3">Search Engine</h3>
               <p className="text-xs text-white/60 mb-4">
                 DuckDuckGo bang operators work with all search engines.
@@ -262,7 +283,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </div>
             </div>
 
-            <div>
+            <div id="widgets" className={`transition-all duration-300 ${highlightedSection === 'widgets' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-3">Widgets</h3>
               <p className="text-xs text-white/60 mb-4">
                 Manage and configure your dashboard widgets.
@@ -277,7 +298,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </Button>
             </div>
 
-            <div>
+            <div id="chat" className={`transition-all duration-300 ${highlightedSection === 'chat' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-4">Chat</h3>
 
               <div className="space-y-4">
@@ -295,7 +316,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </div>
             </div>
 
-            <div>
+            <div id="api-keys" className={`transition-all duration-300 ${highlightedSection === 'api-keys' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-3">API Keys</h3>
               <p className="text-xs text-white/60 mb-4">
                 Required for chat functionality. Keys are stored locally and encrypted.
@@ -315,7 +336,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               />
             </div>
 
-            <div>
+            <div id="security" className={`transition-all duration-300 ${highlightedSection === 'security' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <div className="flex items-center gap-2 mb-3">
                 <Shield className="w-4 h-4" />
                 <h3 className="text-sm font-semibold text-white">Security</h3>
@@ -342,7 +363,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               />
             </div>
 
-            <div>
+            <div id="model-settings" className={`transition-all duration-300 ${highlightedSection === 'model-settings' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-4">Model Settings</h3>
 
               <div className="flex items-center justify-between">
@@ -379,7 +400,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </div>
             </div>
 
-            <div>
+            <div id="danger-zone" className={`transition-all duration-300 ${highlightedSection === 'danger-zone' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-3">Danger Zone</h3>
 
               <AlertDialog>
@@ -412,7 +433,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </AlertDialog>
             </div>
 
-            <div>
+            <div id="import-export" className={`transition-all duration-300 ${highlightedSection === 'import-export' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <div className="flex items-center gap-2 mb-3">
                 <h3 className="text-sm font-semibold text-white">Import & Export</h3>
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
@@ -441,7 +462,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </div>
             </div>
 
-            <div>
+            <div id="keyboard-shortcuts" className={`transition-all duration-300 ${highlightedSection === 'keyboard-shortcuts' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-3">Keyboard Shortcuts</h3>
               <p className="text-xs text-white/60 mb-4">
                 Customize keyboard shortcuts for quick access.
@@ -456,7 +477,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </Button>
             </div>
 
-            <div>
+            <div id="quick-links" className={`transition-all duration-300 ${highlightedSection === 'quick-links' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
               <h3 className="text-sm font-semibold text-white mb-4">Quick Links</h3>
 
               <div className="space-y-4">
@@ -481,7 +502,9 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               </div>
             </div>
 
-            <SettingsAbout />
+            <div id="about" className={`transition-all duration-300 ${highlightedSection === 'about' ? 'ring-2 ring-white/20 rounded-lg p-3 -m-3' : ''}`}>
+              <SettingsAbout />
+            </div>
             </div>
           </div>
 

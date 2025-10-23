@@ -120,7 +120,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
     }))
   }
 
-  const handleWeatherSettingChange = (widgetId: string, field: string, value: string) => {
+  const handleWeatherSettingChange = (widgetId: string, field: string, value: string | boolean) => {
     setPrefs((p) => ({
       ...p,
       widgets: updateWidgetSettings(p.widgets, widgetId, {
@@ -438,6 +438,18 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 <SelectItem value="never">Never show</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor={`moon-info-${widget.id}`} className="text-xs font-normal text-white/70">
+                              Moon Information
+                            </Label>
+                            <Switch
+                              id={`moon-info-${widget.id}`}
+                              checked={(widget as WeatherWidgetConfig).settings.moonInfo || false}
+                              onCheckedChange={(checked) => handleWeatherSettingChange(widget.id, "moonInfo", checked)}
+                              className="data-[state=checked]:bg-blue-600"
+                            />
                           </div>
 
                           <div>

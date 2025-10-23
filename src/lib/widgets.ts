@@ -25,6 +25,7 @@ export const WeatherWidgetSettingsSchema = z.object({
     pressure: z.enum(["hpa", "mb", "inhg", "atm"]).default("hpa"),
   }).optional(),
   forecastDisplay: z.enum(["always", "expanded", "never"]).default("expanded"),
+  moonInfo: z.boolean().default(false),
   alertLevel: z.enum(["none", "warnings-only", "watch-and-warnings", "all"]).default("all"),
   alertTypes: z.object({
     wind: z.boolean().default(true),
@@ -286,6 +287,7 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
     defaultSettings: {
       unitSystem: "metric",
       forecastDisplay: "expanded",
+      moonInfo: false,
       alertLevel: "all",
       alertTypes: {
         wind: true,
@@ -497,6 +499,7 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
     settings: {
       unitSystem: "metric",
       forecastDisplay: "expanded",
+      moonInfo: false,
       alertLevel: "all",
       alertTypes: {
         wind: true,

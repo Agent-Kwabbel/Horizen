@@ -8,6 +8,7 @@ import { MapPin, RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
 import type { WeatherWidgetConfig } from "@/lib/widgets"
 import { useWeatherData } from "../hooks/useWeatherData"
 import { useLocationSearch } from "../hooks/useLocationSearch"
+import { useMoonData } from "../hooks/useMoonData"
 import WeatherIcon from "./WeatherIcon"
 import WeatherAlerts from "./WeatherAlerts"
 import {
@@ -117,6 +118,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
   }
   const units = config.settings.units || DEFAULT_UNITS
   const forecastDisplay = config.settings.forecastDisplay || "expanded"
+  const moonInfoEnabled = config.settings.moonInfo || false
   const alertLevel = config.settings.alertLevel || "all"
   const alertTypes = config.settings.alertTypes
   const {
@@ -130,6 +132,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
   } = useLocationSearch(config.settings.location)
 
   const { weather, refresh } = useWeatherData(coords, units)
+  const { moonData } = useMoonData(coords?.lat, coords?.lon, moonInfoEnabled)
 
   const title = coords ? coords.name : "Select location"
   const allAlerts = weather ? detectWeatherAlerts(weather) : []
@@ -447,6 +450,36 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
                 <span className="ml-auto tabular-nums">{formatTime(weather.daily.sunset)}</span>
               </div>
             </div>
+
+            {moonInfoEnabled && moonData && (
+              <div className="mt-3 pt-3 border-t border-white/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <WeatherIcon icon={moonData.phaseIcon} size={32} />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{moonData.phase}</div>
+                    <div className="text-xs text-white/50">{moonData.illumination}% illuminated</div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs mt-2">
+                  {moonData.moonrise && (
+                    <div className="flex items-center gap-2">
+                      <WeatherIcon icon="moonrise" size={18} />
+                      <span className="text-white/70">Moonrise</span>
+                      <span className="ml-auto tabular-nums">{moonData.moonrise}</span>
+                    </div>
+                  )}
+
+                  {moonData.moonset && (
+                    <div className="flex items-center gap-2">
+                      <WeatherIcon icon="moonset" size={18} />
+                      <span className="text-white/70">Moonset</span>
+                      <span className="ml-auto tabular-nums">{moonData.moonset}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           </div>
         )}

@@ -1,18 +1,34 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useEffect } from 'react'
 import App from '@/App'
 
 // Mock lazy-loaded components with proper default export
-vi.mock('@/components/ChatSidebar', () => ({
-  default: ({ open, onOpenChange }: any) => (
-    <div data-testid="chat-sidebar" data-open={open}>
-      <button onClick={() => onOpenChange(false)}>Close Chat</button>
-    </div>
-  ),
+vi.mock('@/features/chat/components/ChatSidebar', () => ({
+  default: ({ open, onOpenChange }: any) => {
+    useEffect(() => {
+      if (!open) return
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onOpenChange(false)
+        }
+      }
+
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [open, onOpenChange])
+
+    return (
+      <div data-testid="chat-sidebar" data-open={open}>
+        <button onClick={() => onOpenChange(false)}>Close Chat</button>
+      </div>
+    )
+  },
 }))
 
-vi.mock('@/components/ChatFab', () => ({
+vi.mock('@/features/chat/components/ChatFab', () => ({
   default: ({ onClick }: any) => (
     <button data-testid="chat-fab" onClick={onClick}>
       Open Chat

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import WeatherWidget from '@/features/widgets/components/WeatherWidget'
 import { PrefsProvider } from '@/lib/prefs'
 import type { WeatherWidgetConfig } from '@/lib/widgets'
+import * as moonApi from '@/features/widgets/services/moon-api'
 
 // Raw API response format (what the Open-Meteo API returns)
 const mockApiResponse = {
@@ -669,5 +670,164 @@ describe('WeatherWidget', () => {
     await waitFor(() => {
       expect(screen.getAllByText(/30%/).length).toBeGreaterThan(0)
     })
+  })
+
+  it('should display moon information when enabled', async () => {
+    const config: WeatherWidgetConfig = {
+      id: 'weather-test',
+      type: 'weather',
+      enabled: true,
+      order: 0,
+      settings: {
+        alertLevel: 'all',
+        moonInfo: true,
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
+
+    const mockMoonData: moonApi.MoonPhaseData = {
+      phase: 'Waxing Crescent',
+      phaseIcon: 'moon-waxing-crescent',
+      illumination: 15,
+      moonrise: '10:30',
+      moonset: '22:45',
+    }
+
+    vi.spyOn(moonApi, 'fetchMoonData').mockResolvedValue(mockMoonData)
+
+    const mockAirQualityResponse = {
+      current: {
+        european_aqi: 25,
+        us_aqi: 30,
+        pm10: 10,
+        pm2_5: 5,
+        carbon_monoxide: 200,
+        nitrogen_dioxide: 15,
+        sulphur_dioxide: 5,
+        ozone: 40,
+      },
+    }
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAirQualityResponse,
+      } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText('London')).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Waxing Crescent')).toBeInTheDocument()
+    }, { timeout: 3000 })
+
+    await waitFor(() => {
+      expect(screen.getByText(/15% illuminated/)).toBeInTheDocument()
+    })
+  })
+
+  it('should not display moon information when disabled', async () => {
+    const config: WeatherWidgetConfig = {
+      id: 'weather-test',
+      type: 'weather',
+      enabled: true,
+      order: 0,
+      settings: {
+        alertLevel: 'all',
+        moonInfo: false,
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ current: null }),
+      } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText('London')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText(/illuminated/)).not.toBeInTheDocument()
+  })
+
+  it('should display AQI with appropriate color-coded icon', async () => {
+    const config: WeatherWidgetConfig = {
+      id: 'weather-test',
+      type: 'weather',
+      enabled: true,
+      order: 0,
+      settings: {
+        alertLevel: 'all',
+      },
+    }
+
+    const storedLocation = {
+      lat: 51.5074,
+      lon: -0.1278,
+      name: 'London',
+    }
+    localStorage.setItem('wx:location', JSON.stringify(storedLocation))
+    localStorage.setItem('weather-expanded-weather-test', 'true')
+
+    const mockAirQualityResponse = {
+      current: {
+        european_aqi: 75,
+        us_aqi: 80,
+        pm10: 30,
+        pm2_5: 15,
+        carbon_monoxide: 250,
+        nitrogen_dioxide: 25,
+        sulphur_dioxide: 10,
+        ozone: 60,
+      },
+    }
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAirQualityResponse,
+      } as Response)
+
+    renderWeatherWidget(config)
+
+    await waitFor(() => {
+      expect(screen.getByText('London')).toBeInTheDocument()
+    })
+
+    const aqiElement = await screen.findByText(/AQI/i)
+    expect(aqiElement).toBeInTheDocument()
   })
 })

@@ -44,13 +44,11 @@ function formatTime(isoString: string): string {
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-function getAQILevel(aqi: number): { level: string, color: string } {
-  if (aqi <= 50) return { level: 'Good', color: 'text-green-400' }
-  if (aqi <= 100) return { level: 'Moderate', color: 'text-yellow-400' }
-  if (aqi <= 150) return { level: 'Unhealthy (SG)', color: 'text-orange-400' }
-  if (aqi <= 200) return { level: 'Unhealthy', color: 'text-red-400' }
-  if (aqi <= 300) return { level: 'Very Unhealthy', color: 'text-purple-400' }
-  return { level: 'Hazardous', color: 'text-red-600' }
+function getAQIIcon(aqi: number): string {
+  if (aqi <= 50) return 'code-green'
+  if (aqi <= 100) return 'code-yellow'
+  if (aqi <= 150) return 'code-orange'
+  return 'code-red'
 }
 
 function getUVIcon(uvIndex: number): string {
@@ -121,6 +119,11 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
   const moonInfoEnabled = config.settings.moonInfo || false
   const alertLevel = config.settings.alertLevel || "all"
   const alertTypes = config.settings.alertTypes
+
+  // Fetch air quality if: alerts are enabled OR widget is expanded (for display in details)
+  const airQualityAlertsEnabled = alertLevel !== "none" && (alertTypes?.airQuality ?? true)
+  const includeAirQuality = airQualityAlertsEnabled || expanded
+
   const {
     coords,
     setLocation,
@@ -131,7 +134,7 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
     results
   } = useLocationSearch(config.settings.location)
 
-  const { weather, refresh } = useWeatherData(coords, units)
+  const { weather, refresh } = useWeatherData(coords, units, includeAirQuality)
   const { moonData } = useMoonData(coords?.lat, coords?.lon, moonInfoEnabled)
 
   const title = coords ? coords.name : "Select location"
@@ -430,9 +433,9 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
 
               {weather.airQuality && (
                 <div className="flex items-center gap-2">
-                  <WeatherIcon icon="smoke-particles" size={18} />
+                  <WeatherIcon icon={getAQIIcon(getOverallAQI(weather.airQuality))} size={18} />
                   <span className="text-white/70">Air Quality</span>
-                  <span className={`ml-auto tabular-nums ${getAQILevel(getOverallAQI(weather.airQuality)).color}`}>
+                  <span className="ml-auto tabular-nums">
                     {Math.round(getOverallAQI(weather.airQuality))} AQI
                   </span>
                 </div>

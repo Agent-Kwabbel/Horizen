@@ -30,6 +30,7 @@ describe('widgets utility functions', () => {
         defaultSettings: {
           unitSystem: 'metric',
           forecastDisplay: 'expanded',
+          moonInfo: false,
           alertLevel: 'all',
           alertTypes: {
             wind: true,
@@ -91,6 +92,7 @@ describe('widgets utility functions', () => {
         settings: {
           unitSystem: 'metric',
           forecastDisplay: 'expanded',
+          moonInfo: false,
           alertLevel: 'all',
           alertTypes: {
             wind: true,
@@ -143,6 +145,7 @@ describe('widgets utility functions', () => {
         settings: {
           unitSystem: 'metric',
           forecastDisplay: 'expanded',
+          moonInfo: false,
           alertLevel: 'all',
           alertTypes: {
             wind: true,

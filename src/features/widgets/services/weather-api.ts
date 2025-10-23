@@ -127,7 +127,8 @@ export function clearWeatherCache(key: string): void {
 
 export async function fetchCurrentWeather(
   lat: number,
-  lon: number
+  lon: number,
+  includeAirQuality: boolean = true
 ): Promise<WeatherData> {
   const url = new URL("https://api.open-meteo.com/v1/forecast")
   url.searchParams.set("latitude", String(lat))
@@ -181,22 +182,24 @@ export async function fetchCurrentWeather(
     sunset: j.daily.sunset[0],
   }
 
-  // Fetch air quality data
+  // Fetch air quality data only if needed
   let airQuality: AirQuality | null = null
-  try {
-    const aqUrl = new URL("https://air-quality.open-meteo.com/v1/air-quality")
-    aqUrl.searchParams.set("latitude", String(lat))
-    aqUrl.searchParams.set("longitude", String(lon))
-    aqUrl.searchParams.set("current", "pm2_5,european_aqi_pm2_5,us_aqi_pm2_5,pm10,european_aqi_pm10,us_aqi_pm10,ozone,european_aqi_o3,us_aqi_o3,european_aqi,us_aqi")
+  if (includeAirQuality) {
+    try {
+      const aqUrl = new URL("https://air-quality-api.open-meteo.com/v1/air-quality")
+      aqUrl.searchParams.set("latitude", String(lat))
+      aqUrl.searchParams.set("longitude", String(lon))
+      aqUrl.searchParams.set("current", "pm2_5,european_aqi_pm2_5,us_aqi_pm2_5,pm10,european_aqi_pm10,us_aqi_pm10,ozone,european_aqi_o3,us_aqi_o3,european_aqi,us_aqi")
 
-    const aqRes = await fetch(aqUrl.toString())
-    const aqData = await aqRes.json()
+      const aqRes = await fetch(aqUrl.toString())
+      const aqData = await aqRes.json()
 
-    if (aqData.current) {
-      airQuality = aqData.current as AirQuality
+      if (aqData.current) {
+        airQuality = aqData.current as AirQuality
+      }
+    } catch {
+      // Air quality data is optional, continue without it
     }
-  } catch {
-    // Air quality data is optional, continue without it
   }
 
   // Return all data in standard units: °C, m/s, mm, meters, hPa

@@ -10,7 +10,11 @@ import {
   fetchCurrentWeather
 } from "../services/weather-api"
 
-export function useWeatherData(coords: Coordinates | null, _units: WeatherUnits) {
+export function useWeatherData(
+  coords: Coordinates | null,
+  _units: WeatherUnits,
+  includeAirQuality: boolean = true
+) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
@@ -29,14 +33,14 @@ export function useWeatherData(coords: Coordinates | null, _units: WeatherUnits)
       }
 
       // Fetch weather data (always in standard units: °C, m/s, mm, meters, hPa)
-      const data = await fetchCurrentWeather(coords.lat, coords.lon).catch(() => null)
+      const data = await fetchCurrentWeather(coords.lat, coords.lon, includeAirQuality).catch(() => null)
       if (data) {
         setWeather(data)
         setCachedWeather(key, data)
       }
     }
     run()
-  }, [coords, refreshTrigger])
+  }, [coords, refreshTrigger, includeAirQuality])
 
   const refresh = () => {
     if (!coords) return

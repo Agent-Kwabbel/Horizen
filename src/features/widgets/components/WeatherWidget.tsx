@@ -12,7 +12,6 @@ import WeatherIcon from "./WeatherIcon"
 import WeatherAlerts from "./WeatherAlerts"
 import {
   getWeatherIcon,
-  getWindBeaufortIcon,
   getPrecipitationIcon,
   formatTemperature,
   getOverallAQI,

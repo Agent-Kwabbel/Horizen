@@ -142,10 +142,10 @@ describe('App Integration Tests', () => {
     await user.click(settingsButton)
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Show chat')).toBeInTheDocument()
+      expect(screen.getByRole('switch', { name: /show chat/i })).toBeInTheDocument()
     })
 
-    const chatToggle = screen.getByLabelText('Show chat')
+    const chatToggle = screen.getByRole('switch', { name: /show chat/i })
     await user.click(chatToggle)
 
     await waitFor(() => {

@@ -76,7 +76,7 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Show chat')).toBeInTheDocument()
+      expect(screen.getByRole('switch', { name: /show chat/i })).toBeInTheDocument()
     })
   })
 
@@ -88,11 +88,11 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      const chatToggle = screen.getByLabelText('Show chat')
+      const chatToggle = screen.getByRole('switch', { name: /show chat/i })
       expect(chatToggle).toBeChecked()
     })
 
-    const chatToggle = screen.getByLabelText('Show chat')
+    const chatToggle = screen.getByRole('switch', { name: /show chat/i })
     await user.click(chatToggle)
 
     await waitFor(() => {
@@ -465,11 +465,11 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      const chatToggle = screen.getByLabelText('Show chat')
+      const chatToggle = screen.getByRole('switch', { name: /show chat/i })
       expect(chatToggle).toBeInTheDocument()
     })
 
-    const chatToggle = screen.getByLabelText('Show chat')
+    const chatToggle = screen.getByRole('switch', { name: /show chat/i })
     await user.click(chatToggle)
 
     // Close the sheet (click outside or press escape)
@@ -495,10 +495,10 @@ describe('SettingsFab', () => {
     await user.click(button)
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Show chat')).toBeInTheDocument()
+      expect(screen.getByRole('switch', { name: /show chat/i })).toBeInTheDocument()
       expect(screen.getByLabelText('OpenAI API Key')).toBeInTheDocument()
       expect(screen.getByLabelText('Anthropic API Key')).toBeInTheDocument()
-      expect(screen.getByLabelText('Show quick links')).toBeInTheDocument()
+      expect(screen.getByRole('switch', { name: /show quick links/i })).toBeInTheDocument()
     })
   })
 

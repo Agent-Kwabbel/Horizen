@@ -304,11 +304,11 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="chat" className="text-sm font-medium text-white">Show chat</Label>
+                    <Label htmlFor="chat-switch" className="text-sm font-medium text-white">Show chat</Label>
                     <p className="text-xs text-white/60 mt-1">Hides and disables all chat functionality.</p>
                   </div>
                   <Switch
-                    id="chat"
+                    id="chat-switch"
                     checked={prefs.showChat}
                     onCheckedChange={(v) => setPrefs({ ...prefs, showChat: v })}
                   />
@@ -483,11 +483,11 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="quick-links" className="text-sm font-medium text-white">Show quick links</Label>
+                    <Label htmlFor="quick-links-switch" className="text-sm font-medium text-white">Show quick links</Label>
                     <p className="text-xs text-white/60 mt-1">Display quick access links at the bottom.</p>
                   </div>
                   <Switch
-                    id="quick-links"
+                    id="quick-links-switch"
                     checked={prefs.showQuickLinks}
                     onCheckedChange={(v) => setPrefs({ ...prefs, showQuickLinks: v })}
                   />

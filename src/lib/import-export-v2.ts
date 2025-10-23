@@ -221,6 +221,7 @@ export async function exportDataV2(
       }
     } catch (err) {
       console.error("Failed to export API keys:", err)
+      throw err
     }
   }
 

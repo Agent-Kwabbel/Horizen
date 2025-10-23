@@ -205,7 +205,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
 
         <div className="px-6 pb-6 space-y-6">
           <div>
-            <h3 className="text-sm font-medium mb-3">Active Widgets</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">Active Widgets</h3>
             {prefs.widgets.filter((w) => w.enabled).length === 0 ? (
               <div className="text-sm text-white/50 py-8 text-center">
                 No widgets added yet. Add one below!
@@ -282,7 +282,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div className="flex items-center justify-between">
                             <div>
-                              <Label htmlFor={`quick-jot-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                              <Label htmlFor={`quick-jot-${widget.id}`} className="text-sm font-medium text-white cursor-pointer">
                                 Quick Jot Mode
                               </Label>
                               <p className="text-xs text-white/60 mt-1">
@@ -301,7 +301,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                       {isExpanded && widget.type === "weather" && (
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div>
-                            <Label htmlFor={`unit-system-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`unit-system-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Unit System
                             </Label>
                             <Select
@@ -323,7 +323,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           {((widget as WeatherWidgetConfig).settings.unitSystem || detectUnitSystem((widget as WeatherWidgetConfig).settings.units)) === "custom" && (
                             <>
                               <div>
-                                <Label htmlFor={`temp-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                <Label htmlFor={`temp-unit-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                                   Temperature
                                 </Label>
                                 <Select
@@ -342,7 +342,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               </div>
 
                               <div>
-                                <Label htmlFor={`wind-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                <Label htmlFor={`wind-unit-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                                   Wind Speed/Force
                                 </Label>
                                 <Select
@@ -364,7 +364,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               </div>
 
                               <div>
-                                <Label htmlFor={`precip-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                <Label htmlFor={`precip-unit-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                                   Precipitation
                                 </Label>
                                 <Select
@@ -382,7 +382,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               </div>
 
                               <div>
-                                <Label htmlFor={`visibility-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                <Label htmlFor={`visibility-unit-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                                   Visibility
                                 </Label>
                                 <Select
@@ -400,7 +400,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               </div>
 
                               <div>
-                                <Label htmlFor={`pressure-unit-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                                <Label htmlFor={`pressure-unit-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                                   Pressure
                                 </Label>
                                 <Select
@@ -422,7 +422,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           )}
 
                           <div>
-                            <Label htmlFor={`forecast-display-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`forecast-display-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               24H Forecast Display
                             </Label>
                             <Select
@@ -441,20 +441,24 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <Label htmlFor={`moon-info-${widget.id}`} className="text-xs font-normal text-white/70">
-                              Moon Information
-                            </Label>
+                            <div>
+                              <Label htmlFor={`moon-info-${widget.id}`} className="text-sm font-medium text-white cursor-pointer">
+                                Moon Information
+                              </Label>
+                              <p className="text-xs text-white/60 mt-1">
+                                Display moon phase, rise/set times, and illumination
+                              </p>
+                            </div>
                             <Switch
                               id={`moon-info-${widget.id}`}
                               checked={(widget as WeatherWidgetConfig).settings.moonInfo || false}
                               onCheckedChange={(checked) => handleWeatherSettingChange(widget.id, "moonInfo", checked)}
-                              className="data-[state=checked]:bg-blue-600"
                             />
                           </div>
 
                           <div>
                             <div className="flex items-center gap-2 mb-2">
-                              <Label htmlFor={`alert-level-${widget.id}`} className="text-xs font-normal text-white/70">
+                              <Label htmlFor={`alert-level-${widget.id}`} className="text-xs font-medium text-white/70">
                                 Weather Alerts
                               </Label>
                               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
@@ -482,7 +486,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
 
                           {(widget as WeatherWidgetConfig).settings.alertLevel !== "none" && (
                             <div>
-                              <Label className="text-xs font-normal text-white/70 mb-3 block">
+                              <Label className="text-xs font-medium text-white/70 mb-3 block">
                                 Alert Types
                               </Label>
                               <div className="space-y-2.5">
@@ -510,7 +514,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                   }
                                   return (
                                     <div key={key} className="flex items-center justify-between">
-                                      <Label htmlFor={`alert-${key}-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                                      <Label htmlFor={`alert-${key}-${widget.id}`} className="text-sm font-medium text-white cursor-pointer">
                                         {label}
                                       </Label>
                                       <Switch
@@ -530,7 +534,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                       {isExpanded && widget.type === "pomodoro" && (
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div>
-                            <Label htmlFor={`pomodoro-duration-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`pomodoro-duration-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Pomodoro Duration (minutes)
                             </Label>
                             <Input
@@ -553,7 +557,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
 
                           <div>
-                            <Label htmlFor={`short-break-duration-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`short-break-duration-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Short Break Duration (minutes)
                             </Label>
                             <Input
@@ -576,7 +580,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
 
                           <div>
-                            <Label htmlFor={`long-break-duration-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`long-break-duration-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Long Break Duration (minutes)
                             </Label>
                             <Input
@@ -599,7 +603,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <Label htmlFor={`notification-sound-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                            <Label htmlFor={`notification-sound-${widget.id}`} className="text-sm font-medium text-white cursor-pointer">
                               Notification Sound
                             </Label>
                             <Switch
@@ -680,7 +684,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div>
                             <div className="flex items-center gap-1.5 mb-2">
-                              <Label htmlFor={`ticker-symbol-${widget.id}`} className="text-xs font-normal text-white/70">
+                              <Label htmlFor={`ticker-symbol-${widget.id}`} className="text-xs font-medium text-white/70">
                                 Add Ticker Symbol
                               </Label>
                               <TooltipProvider>
@@ -842,7 +846,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                       {isExpanded && widget.type === "habitTracker" && (
                         <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
                           <div>
-                            <Label htmlFor={`reset-time-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`reset-time-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Daily Reset Time
                             </Label>
                             <Input
@@ -865,7 +869,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
 
                           <div>
-                            <Label htmlFor={`timezone-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                            <Label htmlFor={`timezone-${widget.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Timezone
                             </Label>
                             <Select
@@ -921,7 +925,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
 
                           <div className="flex items-center justify-between">
                             <div>
-                              <Label htmlFor={`unlimited-height-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                              <Label htmlFor={`unlimited-height-${widget.id}`} className="text-sm font-medium text-white cursor-pointer">
                                 Unlimited Height
                               </Label>
                               <p className="text-xs text-white/60 mt-1">
@@ -953,7 +957,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
 
           {availableToAdd.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium mb-3">Add Widget</h3>
+              <h3 className="text-sm font-semibold text-white mb-3">Add Widget</h3>
               <div className="space-y-2">
                 {availableToAdd.map((type) => {
                   const metadata = WIDGET_REGISTRY[type]

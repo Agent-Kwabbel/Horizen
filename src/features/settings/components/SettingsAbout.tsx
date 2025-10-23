@@ -1,9 +1,7 @@
 export default function SettingsAbout() {
   return (
     <div>
-      <div className="mb-3">
-        <h3 className="text-lg font-semibold">About Horizen</h3>
-      </div>
+      <h3 className="text-sm font-semibold text-white mb-3">About Horizen</h3>
 
       <div className="bg-white/5 rounded-lg p-4 space-y-2 text-sm text-white/80">
         <p>

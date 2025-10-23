@@ -35,8 +35,8 @@ export default function SettingsApiKeys({ apiKeys, keysLocked, onApiKeysChange }
   return (
     <div className="space-y-3">
       <div>
-        <div className="flex items-center gap-1 mb-1">
-          <Label htmlFor="openai-key" className="text-xs font-normal text-white/80">
+        <div className="flex items-center gap-1 mb-2">
+          <Label htmlFor="openai-key" className="text-xs font-medium text-white/70">
             OpenAI API Key
           </Label>
           <Tooltip>
@@ -76,8 +76,8 @@ export default function SettingsApiKeys({ apiKeys, keysLocked, onApiKeysChange }
       </div>
 
       <div>
-        <div className="flex items-center gap-1 mb-1">
-          <Label htmlFor="anthropic-key" className="text-xs font-normal text-white/80">
+        <div className="flex items-center gap-1 mb-2">
+          <Label htmlFor="anthropic-key" className="text-xs font-medium text-white/70">
             Anthropic API Key
           </Label>
           <Tooltip>
@@ -117,8 +117,8 @@ export default function SettingsApiKeys({ apiKeys, keysLocked, onApiKeysChange }
       </div>
 
       <div>
-        <div className="flex items-center gap-1 mb-1">
-          <Label htmlFor="gemini-key" className="text-xs font-normal text-white/80">
+        <div className="flex items-center gap-1 mb-2">
+          <Label htmlFor="gemini-key" className="text-xs font-medium text-white/70">
             Gemini API Key
           </Label>
           <Tooltip>

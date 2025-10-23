@@ -33,7 +33,7 @@ export default function SettingsQuickLinks({
         <div key={link.id} className="bg-white/5 rounded-lg p-3 space-y-2">
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label htmlFor={`name-${link.id}`} className="text-xs font-normal text-white/70 mb-1 block">
+              <Label htmlFor={`name-${link.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                 Name
               </Label>
               <Input
@@ -45,7 +45,7 @@ export default function SettingsQuickLinks({
               />
             </div>
             <div>
-              <Label htmlFor={`icon-${link.id}`} className="text-xs font-normal text-white/70 mb-1 block">
+              <Label htmlFor={`icon-${link.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                 Icon
               </Label>
               <Select
@@ -77,7 +77,7 @@ export default function SettingsQuickLinks({
             </div>
           </div>
           <div>
-            <Label htmlFor={`url-${link.id}`} className="text-xs font-normal text-white/70 mb-1 block">
+            <Label htmlFor={`url-${link.id}`} className="text-xs font-medium text-white/70 mb-2 block">
               URL
             </Label>
             <Input

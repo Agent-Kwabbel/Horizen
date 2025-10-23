@@ -178,16 +178,14 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
           <div className="flex-1 overflow-y-auto px-5 pb-5">
             <div className="space-y-6">
             <div>
-              <div className="mb-3">
-                <h3 className="text-lg font-semibold">Search Engine</h3>
-                <p className="text-xs text-white/60 mt-1">
-                  DuckDuckGo bang operators work with all search engines.
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-3">Search Engine</h3>
+              <p className="text-xs text-white/60 mb-4">
+                DuckDuckGo bang operators work with all search engines.
+              </p>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="search-engine" className="text-xs font-normal text-white/70 mb-2 block">
+                  <Label htmlFor="search-engine" className="text-xs font-medium text-white/70 mb-2 block">
                     Default Search Engine
                   </Label>
                   <Select
@@ -210,12 +208,12 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
 
                 {prefs.customSearchEngines.length > 0 && (
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-white/70">Custom Search Engines</Label>
+                    <Label className="text-xs font-medium text-white/70">Custom Search Engines</Label>
                     {prefs.customSearchEngines.map((engine) => (
                       <div key={engine.id} className="bg-white/5 rounded-lg p-3 space-y-2">
                         <div className="flex gap-2">
                           <div className="flex-1">
-                            <Label htmlFor={`engine-name-${engine.id}`} className="text-xs font-normal text-white/70 mb-1 block">
+                            <Label htmlFor={`engine-name-${engine.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                               Name
                             </Label>
                             <Input
@@ -239,7 +237,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
                           </div>
                         </div>
                         <div>
-                          <Label htmlFor={`engine-url-${engine.id}`} className="text-xs font-normal text-white/70 mb-1 block">
+                          <Label htmlFor={`engine-url-${engine.id}`} className="text-xs font-medium text-white/70 mb-2 block">
                             Search URL (use {"{searchTerms}"} as placeholder)
                           </Label>
                           <Input
@@ -265,12 +263,10 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h3 className="text-lg font-semibold">Widgets</h3>
-                <p className="text-xs text-white/60 mt-1">
-                  Manage and configure your dashboard widgets.
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-3">Widgets</h3>
+              <p className="text-xs text-white/60 mb-4">
+                Manage and configure your dashboard widgets.
+              </p>
 
               <Button
                 onClick={() => setWidgetSettingsOpen(true)}
@@ -282,15 +278,13 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h3 className="text-lg font-semibold">Chat</h3>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-4">Chat</h3>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="chat" className="font-normal">Show chat</Label>
-                    <p className="text-xs text-white/60">Hides and disables all chat functionality.</p>
+                    <Label htmlFor="chat" className="text-sm font-medium text-white">Show chat</Label>
+                    <p className="text-xs text-white/60 mt-1">Hides and disables all chat functionality.</p>
                   </div>
                   <Switch
                     id="chat"
@@ -302,12 +296,10 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h4 className="text-sm font-medium">API Keys</h4>
-                <p className="text-xs text-white/60 mt-1">
-                  Required for chat functionality. Keys are stored locally and encrypted.
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-3">API Keys</h3>
+              <p className="text-xs text-white/60 mb-4">
+                Required for chat functionality. Keys are stored locally and encrypted.
+              </p>
 
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-3">
                 <p className="text-xs text-blue-200">
@@ -324,20 +316,16 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    <h4 className="text-sm font-medium">Security</h4>
-                  </div>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                    BETA
-                  </span>
-                </div>
-                <p className="text-xs text-white/60 mt-1">
-                  Protect your API keys with password-based encryption.
-                </p>
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-4 h-4" />
+                <h3 className="text-sm font-semibold text-white">Security</h3>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  BETA
+                </span>
               </div>
+              <p className="text-xs text-white/60 mb-4">
+                Protect your API keys with password-based encryption.
+              </p>
 
               <SettingsSecurity
                 securityStatus={securityStatus}
@@ -355,14 +343,12 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h4 className="text-sm font-medium">Model Settings</h4>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-4">Model Settings</h3>
 
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-1">
-                    <Label htmlFor="verified-org" className="font-normal">
+                    <Label htmlFor="verified-org" className="text-sm font-medium text-white">
                       Show verified org models
                     </Label>
                     <Tooltip>
@@ -381,7 +367,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs text-white/60 mt-1">
                     Display GPT-5 and GPT-5 Mini (requires verified OpenAI organization)
                   </p>
                 </div>
@@ -394,9 +380,7 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h4 className="text-sm font-medium">Danger Zone</h4>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-3">Danger Zone</h3>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -429,17 +413,15 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">Import & Export</h3>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                    BETA
-                  </span>
-                </div>
-                <p className="text-xs text-white/60 mt-1">
-                  Backup or restore your data, preferences, and conversations.
-                </p>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-semibold text-white">Import & Export</h3>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  BETA
+                </span>
               </div>
+              <p className="text-xs text-white/60 mb-4">
+                Backup or restore your data, preferences, and conversations.
+              </p>
 
               <div className="space-y-2">
                 <Button
@@ -460,12 +442,10 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
-                <p className="text-xs text-white/60 mt-1">
-                  Customize keyboard shortcuts for quick access.
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-3">Keyboard Shortcuts</h3>
+              <p className="text-xs text-white/60 mb-4">
+                Customize keyboard shortcuts for quick access.
+              </p>
 
               <Button
                 onClick={onOpenShortcuts}
@@ -477,15 +457,13 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
             </div>
 
             <div>
-              <div className="mb-3">
-                <h3 className="text-lg font-semibold">Quick Links</h3>
-              </div>
+              <h3 className="text-sm font-semibold text-white mb-4">Quick Links</h3>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="quick-links" className="font-normal">Show quick links</Label>
-                    <p className="text-xs text-white/60">Display quick access links at the bottom.</p>
+                    <Label htmlFor="quick-links" className="text-sm font-medium text-white">Show quick links</Label>
+                    <p className="text-xs text-white/60 mt-1">Display quick access links at the bottom.</p>
                   </div>
                   <Switch
                     id="quick-links"

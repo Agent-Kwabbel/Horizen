@@ -28,28 +28,56 @@ function checkWindAlerts(data: WeatherData): WeatherAlert[] {
   const alerts: WeatherAlert[] = []
 
   // Wind speeds are already in m/s
-  const maxGust = Math.max(data.current.wind_gusts_10m, data.daily.wind_gusts_10m_max)
   const maxWind = Math.max(data.current.wind_speed_10m, data.daily.wind_speed_10m_max)
-  const maxWindMs = Math.max(maxGust, maxWind)
 
-  // Thresholds in m/s: 90 km/h = 25 m/s, 65 km/h = 18.1 m/s, 50 km/h = 13.9 m/s
-  if (maxWindMs >= 25) {
+  // Thresholds in m/s: 90 km/h = 25 m/s, 60 km/h = 16.67 m/s, 40 km/h = 11.11 m/s
+  if (maxWind >= 25) {
     alerts.push({
       type: 'dangerous_storm',
       severity: 'warning',
       message: 'DANGEROUS STORM WARNING! Avoid all travel and stay indoors. Secure loose objects.'
     })
-  } else if (maxWindMs >= 18.1) {
+  } else if (maxWind >= 16.67) {
     alerts.push({
       type: 'gale',
       severity: 'watch',
       message: 'Gale watch. Strong winds expected. Secure outdoor objects and avoid unnecessary travel.'
     })
-  } else if (maxWindMs >= 13.9) {
+  } else if (maxWind >= 11.11) {
     alerts.push({
       type: 'wind',
       severity: 'advisory',
       message: 'Strong wind advisory. Gusty conditions expected.'
+    })
+  }
+
+  return alerts
+}
+
+function checkGustAlerts(data: WeatherData): WeatherAlert[] {
+  const alerts: WeatherAlert[] = []
+
+  // Gust speeds are already in m/s
+  const maxGust = Math.max(data.current.wind_gusts_10m, data.daily.wind_gusts_10m_max)
+
+  // Thresholds in m/s: 100 km/h = 27.78 m/s, 75 km/h = 20.83 m/s, 60 km/h = 16.67 m/s
+  if (maxGust >= 27.78) {
+    alerts.push({
+      type: 'dangerous_gust',
+      severity: 'warning',
+      message: 'DANGEROUS GUST WARNING! Extreme wind gusts expected. Avoid all travel and stay indoors.'
+    })
+  } else if (maxGust >= 20.83) {
+    alerts.push({
+      type: 'severe_gust',
+      severity: 'watch',
+      message: 'Severe gust watch. Strong wind gusts expected. Secure outdoor objects.'
+    })
+  } else if (maxGust >= 16.67) {
+    alerts.push({
+      type: 'gust',
+      severity: 'advisory',
+      message: 'Gust advisory. Gusty conditions expected.'
     })
   }
 
@@ -125,8 +153,8 @@ function checkColdDurationAlert(
   // Temperatures are already in Celsius
   const hourlyTemps = data.hourly.apparent_temperature
 
-  for (let i = 0; i <= hourlyTemps.length - 6; i++) {
-    const window = hourlyTemps.slice(i, i + 6)
+  for (let i = 0; i <= hourlyTemps.length - 3; i++) {
+    const window = hourlyTemps.slice(i, i + 3)
     let maxSeverity: 'warning' | 'watch' | 'advisory' | null = null
 
     for (const temp of window) {
@@ -369,17 +397,15 @@ function checkThunderstormAlerts(data: WeatherData): WeatherAlert[] {
 
   // Wind speeds are already in m/s
   const wind = data.current.wind_speed_10m
-  const gusts = data.current.wind_gusts_10m
-  const maxWind = Math.max(wind, gusts)
 
-  // Thresholds: 80 km/h = 22.22 m/s, 50 km/h = 13.89 m/s
-  if (hasThunderstorm && maxWind >= 22.22) {
+  // Thresholds: 80 km/h = 22.22 m/s, 40 km/h = 11.11 m/s
+  if (hasThunderstorm && wind >= 22.22) {
     alerts.push({
       type: 'severe_thunderstorm',
       severity: 'warning',
       message: 'SEVERE THUNDERSTORM WARNING! Damaging winds and heavy rain. Seek shelter immediately.'
     })
-  } else if (hasThunderstorm && maxWind >= 13.89) {
+  } else if (hasThunderstorm && wind >= 11.11) {
     alerts.push({
       type: 'thunderstorm',
       severity: 'watch',
@@ -534,6 +560,7 @@ export function detectWeatherAlerts(data: WeatherData): WeatherAlert[] {
   // All data is in standard units: °C, m/s, mm, meters, hPa
   // No conversion needed
   allAlerts.push(...checkWindAlerts(data))
+  allAlerts.push(...checkGustAlerts(data))
   allAlerts.push(...checkTemperatureAlerts(data))
   allAlerts.push(...checkWindChillAlerts(data))
   allAlerts.push(...checkPrecipitationAlerts(data))
@@ -575,6 +602,7 @@ export type AlertLevel = 'none' | 'warnings-only' | 'watch-and-warnings' | 'all'
 
 export type AlertTypes = {
   wind?: boolean
+  gust?: boolean
   temperature?: boolean
   precipitation?: boolean
   snow?: boolean
@@ -588,6 +616,9 @@ const ALERT_TYPE_MAPPING: Record<string, keyof AlertTypes> = {
   'dangerous_storm': 'wind',
   'gale': 'wind',
   'wind': 'wind',
+  'dangerous_gust': 'gust',
+  'severe_gust': 'gust',
+  'gust': 'gust',
   'extreme_heat': 'temperature',
   'excessive_heat': 'temperature',
   'heat': 'temperature',

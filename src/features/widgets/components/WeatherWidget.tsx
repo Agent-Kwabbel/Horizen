@@ -142,6 +142,8 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
 
     const now = new Date()
     const currentHour = now.getHours()
+    const todaySunrise = new Date(weather.daily.sunrise)
+    const todaySunset = new Date(weather.daily.sunset)
 
     const hourlyForecast = Array.from({ length: 25 }, (_, i) => {
       const hour = (currentHour + i) % 24
@@ -154,9 +156,22 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
       const precipitation = isNow ? weather.current.precipitation_probability : (weather.hourly.precipitation_probability?.[i] || 0)
       const weatherCode = isNow ? weather.current.weather_code : weather.hourly.weather_code[i]
 
+      // Calculate if this hour is during daytime
+      const forecastTime = new Date(now.getTime() + i * 60 * 60 * 1000)
+
+      // If forecast crosses into next day, add 24 hours to sunrise/sunset
+      const sunrise = new Date(todaySunrise)
+      const sunset = new Date(todaySunset)
+      if (forecastTime.getDate() !== now.getDate()) {
+        sunrise.setDate(sunrise.getDate() + 1)
+        sunset.setDate(sunset.getDate() + 1)
+      }
+
+      const isDayTime = forecastTime >= sunrise && forecastTime <= sunset
+
       const mockWeather = {
         weather_code: weatherCode,
-        is_day: weather.current.is_day,
+        is_day: isDayTime ? 1 : 0,
         temperature_2m: isNow ? weather.current.temperature_2m : weather.hourly.temperature_2m[i],
         apparent_temperature: isNow ? weather.current.apparent_temperature : weather.hourly.apparent_temperature[i],
         wind_speed_10m: isNow ? weather.current.wind_speed_10m : weather.hourly.wind_speed_10m[i],
@@ -356,9 +371,15 @@ export default function WeatherWidget({ config }: WeatherWidgetProps) {
 
               <div className={`flex flex-col gap-2 ${forecastDisplay === "expanded" ? "mt-3 pt-3 border-t border-white/20" : ""}`}>
               <div className="flex items-center gap-2">
-                <WeatherIcon icon={getWindBeaufortIcon(weather.current.wind_speed_10m, units.windSpeed)} size={18} />
+                <WeatherIcon icon="wind" size={18} />
                 <span className="text-white/70">Wind Speed/Force</span>
                 <span className="ml-auto tabular-nums">{formatWindSpeedValue(weather.current.wind_speed_10m, units)}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <WeatherIcon icon="windsock" size={18} />
+                <span className="text-white/70">Gust Speed/Force</span>
+                <span className="ml-auto tabular-nums">{formatWindSpeedValue(weather.current.wind_gusts_10m, units)}</span>
               </div>
 
               <div className="flex items-center gap-2">

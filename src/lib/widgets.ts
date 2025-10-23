@@ -28,6 +28,7 @@ export const WeatherWidgetSettingsSchema = z.object({
   alertLevel: z.enum(["none", "warnings-only", "watch-and-warnings", "all"]).default("all"),
   alertTypes: z.object({
     wind: z.boolean().default(true),
+    gust: z.boolean().default(true),
     temperature: z.boolean().default(true),
     precipitation: z.boolean().default(true),
     snow: z.boolean().default(true),
@@ -288,6 +289,7 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
       alertLevel: "all",
       alertTypes: {
         wind: true,
+        gust: true,
         temperature: true,
         precipitation: true,
         snow: true,
@@ -498,6 +500,7 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
       alertLevel: "all",
       alertTypes: {
         wind: true,
+        gust: true,
         temperature: true,
         precipitation: true,
         snow: true,

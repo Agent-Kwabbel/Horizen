@@ -144,6 +144,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
 
     const currentAlertTypes = widget.settings.alertTypes || {
       wind: true,
+      gust: true,
       temperature: true,
       precipitation: true,
       snow: true,
@@ -475,6 +476,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                               <div className="space-y-2.5">
                                 {[
                                   { key: 'wind', label: 'Wind Alerts' },
+                                  { key: 'gust', label: 'Gust Alerts' },
                                   { key: 'temperature', label: 'Temperature Alerts' },
                                   { key: 'precipitation', label: 'Rain Alerts' },
                                   { key: 'snow', label: 'Snow Alerts' },
@@ -485,6 +487,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 ].map(({ key, label }) => {
                                   const alertTypes = (widget as WeatherWidgetConfig).settings.alertTypes || {
                                     wind: true,
+                                    gust: true,
                                     temperature: true,
                                     precipitation: true,
                                     snow: true,

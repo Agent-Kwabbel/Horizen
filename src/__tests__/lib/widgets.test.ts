@@ -33,6 +33,7 @@ describe('widgets utility functions', () => {
           alertLevel: 'all',
           alertTypes: {
             wind: true,
+            gust: true,
             temperature: true,
             precipitation: true,
             snow: true,
@@ -93,6 +94,7 @@ describe('widgets utility functions', () => {
           alertLevel: 'all',
           alertTypes: {
             wind: true,
+            gust: true,
             temperature: true,
             precipitation: true,
             snow: true,
@@ -144,6 +146,7 @@ describe('widgets utility functions', () => {
           alertLevel: 'all',
           alertTypes: {
             wind: true,
+            gust: true,
             temperature: true,
             precipitation: true,
             snow: true,

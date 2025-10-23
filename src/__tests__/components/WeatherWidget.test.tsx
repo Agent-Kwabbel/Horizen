@@ -174,7 +174,8 @@ describe('WeatherWidget', () => {
 
     // Check for expanded section data (wind speed defaults to km/h)
     expect(screen.getByText(/55.*km\/h/i)).toBeInTheDocument()
-    expect(screen.getByText(/30%/)).toBeInTheDocument()
+    // Check for precipitation percentage (multiple instances in forecast)
+    expect(screen.getAllByText(/30%/).length).toBeGreaterThan(0)
   })
 
   it('should display loading skeleton while fetching', () => {
@@ -666,7 +667,7 @@ describe('WeatherWidget', () => {
     renderWeatherWidget(config)
 
     await waitFor(() => {
-      expect(screen.getByText(/30%/)).toBeInTheDocument()
+      expect(screen.getAllByText(/30%/).length).toBeGreaterThan(0)
     })
   })
 })

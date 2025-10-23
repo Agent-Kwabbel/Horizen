@@ -830,6 +830,24 @@ export default function DevModeOverlay() {
                           </div>
                         )}
 
+                        {/* Pomodoro Widget - No Dev Controls Needed */}
+                        {widget.type === "pomodoro" && (
+                          <div className="space-y-3">
+                            <div className="text-xs text-white/50 font-mono">
+                              No dev controls needed - use the widget controls directly!
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Habit Tracker Widget - No Dev Controls Needed */}
+                        {widget.type === "habitTracker" && (
+                          <div className="space-y-3">
+                            <div className="text-xs text-white/50 font-mono">
+                              No dev controls needed - interact with the widget directly!
+                            </div>
+                          </div>
+                        )}
+
                         {/* Ticker Widget Controls */}
                         {widget.type === "ticker" && (
                           <div className="space-y-4">

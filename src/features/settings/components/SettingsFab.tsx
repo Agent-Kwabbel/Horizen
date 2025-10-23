@@ -28,8 +28,8 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Plus, Trash2, Settings, HelpCircle, Keyboard, Download, Upload, Shield, Blocks } from "lucide-react"
-import ExportDialog from "@/features/security/components/ExportDialog"
-import ImportDialog from "@/features/security/components/ImportDialog"
+import ExportDialogV2 from "@/features/security/components/ExportDialogV2"
+import ImportDialogV2 from "@/features/security/components/ImportDialogV2"
 import PasswordDialog from "@/features/security/components/PasswordDialog"
 import ChangePasswordDialog from "@/features/security/components/ChangePasswordDialog"
 import WidgetSettings from "./WidgetSettings"
@@ -515,8 +515,8 @@ export default function SettingsFab({ open, onOpenChange, onOpenShortcuts }: Set
         </SheetContent>
       </Sheet>
 
-      <ExportDialog open={exportDialogOpen} onOpenChange={setExportDialogOpen} />
-      <ImportDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
+      <ExportDialogV2 open={exportDialogOpen} onOpenChange={setExportDialogOpen} />
+      <ImportDialogV2 open={importDialogOpen} onOpenChange={setImportDialogOpen} />
       <WidgetSettings open={widgetSettingsOpen} onOpenChange={setWidgetSettingsOpen} />
 
       <PasswordDialog

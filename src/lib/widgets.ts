@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const WidgetTypeSchema = z.enum(["weather", "notes", "quote", "ticker", "pomodoro"])
+export const WidgetTypeSchema = z.enum(["weather", "notes", "quote", "ticker", "pomodoro", "habitTracker"])
 export type WidgetType = z.infer<typeof WidgetTypeSchema>
 
 export const BaseWidgetConfigSchema = z.object({
@@ -65,7 +65,80 @@ export const PomodoroWidgetSettingsSchema = z.object({
   notificationSound: z.boolean().default(true),
 })
 
+export const HabitSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  checked: z.boolean().default(false),
+})
+
+const AVAILABLE_TIMEZONES = [
+  "Etc/GMT+12", "Pacific/Pago_Pago", "Pacific/Honolulu", "America/Anchorage",
+  "America/Los_Angeles", "America/Denver", "America/Chicago", "America/New_York",
+  "America/Santiago", "America/Sao_Paulo", "Atlantic/South_Georgia", "Atlantic/Azores",
+  "UTC", "Europe/Paris", "Africa/Cairo", "Europe/Moscow", "Asia/Dubai", "Asia/Kabul",
+  "Asia/Karachi", "Asia/Kolkata", "Asia/Kathmandu", "Asia/Dhaka", "Asia/Yangon",
+  "Asia/Bangkok", "Asia/Shanghai", "Asia/Tokyo", "Australia/Adelaide", "Australia/Sydney",
+  "Pacific/Noumea", "Pacific/Auckland", "Pacific/Tongatapu", "Pacific/Kiritimati"
+]
+
+function getDefaultTimezone(): string {
+  const detected = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  if (AVAILABLE_TIMEZONES.includes(detected)) {
+    return detected
+  }
+
+  const offset = new Date().getTimezoneOffset()
+  const hoursOffset = -offset / 60
+
+  const offsetMap: Record<number, string> = {
+    [-12]: "Etc/GMT+12",
+    [-11]: "Pacific/Pago_Pago",
+    [-10]: "Pacific/Honolulu",
+    [-9]: "America/Anchorage",
+    [-8]: "America/Los_Angeles",
+    [-7]: "America/Denver",
+    [-6]: "America/Chicago",
+    [-5]: "America/New_York",
+    [-4]: "America/Santiago",
+    [-3]: "America/Sao_Paulo",
+    [-2]: "Atlantic/South_Georgia",
+    [-1]: "Atlantic/Azores",
+    [0]: "UTC",
+    [1]: "Europe/Paris",
+    [2]: "Africa/Cairo",
+    [3]: "Europe/Moscow",
+    [4]: "Asia/Dubai",
+    [4.5]: "Asia/Kabul",
+    [5]: "Asia/Karachi",
+    [5.5]: "Asia/Kolkata",
+    [5.75]: "Asia/Kathmandu",
+    [6]: "Asia/Dhaka",
+    [6.5]: "Asia/Yangon",
+    [7]: "Asia/Bangkok",
+    [8]: "Asia/Shanghai",
+    [9]: "Asia/Tokyo",
+    [9.5]: "Australia/Adelaide",
+    [10]: "Australia/Sydney",
+    [11]: "Pacific/Noumea",
+    [12]: "Pacific/Auckland",
+    [13]: "Pacific/Tongatapu",
+    [14]: "Pacific/Kiritimati",
+  }
+
+  return offsetMap[hoursOffset] || "UTC"
+}
+
+export const HabitTrackerWidgetSettingsSchema = z.object({
+  habits: z.array(HabitSchema).default([]),
+  lastResetDate: z.string().optional(),
+  resetTime: z.string().default("02:00"),
+  timezone: z.string().default(getDefaultTimezone()),
+  unlimitedHeight: z.boolean().default(false),
+})
+
 export type TickerSymbol = z.infer<typeof TickerSymbolSchema>
+export type Habit = z.infer<typeof HabitSchema>
 
 export const WeatherWidgetConfigSchema = BaseWidgetConfigSchema.extend({
   type: z.literal("weather"),
@@ -92,12 +165,18 @@ export const PomodoroWidgetConfigSchema = BaseWidgetConfigSchema.extend({
   settings: PomodoroWidgetSettingsSchema,
 })
 
+export const HabitTrackerWidgetConfigSchema = BaseWidgetConfigSchema.extend({
+  type: z.literal("habitTracker"),
+  settings: HabitTrackerWidgetSettingsSchema,
+})
+
 export const WidgetConfigSchema = z.discriminatedUnion("type", [
   WeatherWidgetConfigSchema,
   NotesWidgetConfigSchema,
   QuoteWidgetConfigSchema,
   TickerWidgetConfigSchema,
   PomodoroWidgetConfigSchema,
+  HabitTrackerWidgetConfigSchema,
 ])
 
 export type WeatherWidgetConfig = z.infer<typeof WeatherWidgetConfigSchema>
@@ -105,6 +184,7 @@ export type NotesWidgetConfig = z.infer<typeof NotesWidgetConfigSchema>
 export type QuoteWidgetConfig = z.infer<typeof QuoteWidgetConfigSchema>
 export type TickerWidgetConfig = z.infer<typeof TickerWidgetConfigSchema>
 export type PomodoroWidgetConfig = z.infer<typeof PomodoroWidgetConfigSchema>
+export type HabitTrackerWidgetConfig = z.infer<typeof HabitTrackerWidgetConfigSchema>
 export type WidgetConfig = z.infer<typeof WidgetConfigSchema>
 
 export type UnitSystem = "metric" | "imperial" | "scientific" | "custom"
@@ -260,6 +340,18 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetMetadata> = {
       notificationSound: true,
     },
   },
+  habitTracker: {
+    type: "habitTracker",
+    name: "Habit Tracker",
+    description: "Track daily habits with automatic reset",
+    icon: "check-square",
+    defaultSettings: {
+      habits: [],
+      resetTime: "02:00",
+      timezone: getDefaultTimezone(),
+      unlimitedHeight: false,
+    },
+  },
 }
 
 export function createDefaultWidget(type: WidgetType, order: number = 0): WidgetConfig {
@@ -306,6 +398,14 @@ export function createDefaultWidget(type: WidgetType, order: number = 0): Widget
         enabled: true,
         order,
         settings: metadata.defaultSettings as PomodoroWidgetConfig["settings"],
+      }
+    case "habitTracker":
+      return {
+        id: baseId,
+        type: "habitTracker",
+        enabled: true,
+        order,
+        settings: metadata.defaultSettings as HabitTrackerWidgetConfig["settings"],
       }
   }
 }
@@ -375,6 +475,11 @@ export function updateWidgetSettings(
           ...widget,
           settings: { ...widget.settings, ...settings },
         } as PomodoroWidgetConfig
+      case "habitTracker":
+        return {
+          ...widget,
+          settings: { ...widget.settings, ...settings },
+        } as HabitTrackerWidgetConfig
       default:
         return widget
     }

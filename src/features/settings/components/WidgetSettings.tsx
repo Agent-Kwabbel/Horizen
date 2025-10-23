@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { usePrefs } from "@/lib/prefs"
-import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, PomodoroWidgetConfig, TickerSymbol, UnitSystem } from "@/lib/widgets"
+import type { WidgetType, WeatherWidgetConfig, NotesWidgetConfig, TickerWidgetConfig, PomodoroWidgetConfig, HabitTrackerWidgetConfig, TickerSymbol, UnitSystem } from "@/lib/widgets"
 import { WIDGET_REGISTRY, createDefaultWidget, reorderWidgets, updateWidgetSettings, getUnitsForSystem, detectUnitSystem } from "@/lib/widgets"
 import {
   Sheet,
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ChevronUp, ChevronDown, Trash2, Plus, Cloud, StickyNote, Quote, TrendingUp, X, Coins, HelpCircle, Timer } from "lucide-react"
+import { ChevronUp, ChevronDown, Trash2, Plus, Cloud, StickyNote, Quote, TrendingUp, X, Coins, HelpCircle, Timer, CheckSquare } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 type WidgetSettingsProps = {
@@ -34,6 +34,7 @@ const WIDGET_ICONS = {
   quote: Quote,
   ticker: TrendingUp,
   pomodoro: Timer,
+  habitTracker: CheckSquare,
 }
 
 export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsProps) {
@@ -253,7 +254,7 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                           </div>
                         </div>
 
-                        {(widget.type === "weather" || widget.type === "notes" || widget.type === "ticker" || widget.type === "pomodoro") && (
+                        {(widget.type === "weather" || widget.type === "notes" || widget.type === "ticker" || widget.type === "pomodoro" || widget.type === "habitTracker") && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -819,6 +820,111 @@ export default function WidgetSettings({ open, onOpenChange }: WidgetSettingsPro
                                 ))}
                               </div>
                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {isExpanded && widget.type === "habitTracker" && (
+                        <div className="px-3 pb-3 pt-3 space-y-3 border-t border-white/10">
+                          <div>
+                            <Label htmlFor={`reset-time-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              Daily Reset Time
+                            </Label>
+                            <Input
+                              id={`reset-time-${widget.id}`}
+                              type="time"
+                              value={(widget as HabitTrackerWidgetConfig).settings.resetTime || "02:00"}
+                              onChange={(e) => {
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    resetTime: e.target.value,
+                                  }),
+                                }))
+                              }}
+                              className="bg-white/5 border-white/10 text-white"
+                            />
+                            <p className="text-xs text-white/50 mt-2">
+                              All habits will be unchecked at this time each day
+                            </p>
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`timezone-${widget.id}`} className="text-xs font-normal text-white/70 mb-2 block">
+                              Timezone
+                            </Label>
+                            <Select
+                              value={(widget as HabitTrackerWidgetConfig).settings.timezone || "UTC"}
+                              onValueChange={(v) => {
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    timezone: v,
+                                  }),
+                                }))
+                              }}
+                            >
+                              <SelectTrigger id={`timezone-${widget.id}`} className="bg-white/5 border-white/10 text-white w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-black/90 text-white border-white/10 max-h-[300px]">
+                                <SelectItem value="Etc/GMT+12">Baker Island (UTC-12)</SelectItem>
+                                <SelectItem value="Pacific/Pago_Pago">Pago Pago (UTC-11)</SelectItem>
+                                <SelectItem value="Pacific/Honolulu">Honolulu (UTC-10)</SelectItem>
+                                <SelectItem value="America/Anchorage">Anchorage (UTC-9)</SelectItem>
+                                <SelectItem value="America/Los_Angeles">Los Angeles (UTC-8)</SelectItem>
+                                <SelectItem value="America/Denver">Denver (UTC-7)</SelectItem>
+                                <SelectItem value="America/Chicago">Chicago (UTC-6)</SelectItem>
+                                <SelectItem value="America/New_York">New York (UTC-5)</SelectItem>
+                                <SelectItem value="America/Santiago">Santiago (UTC-4)</SelectItem>
+                                <SelectItem value="America/Sao_Paulo">São Paulo (UTC-3)</SelectItem>
+                                <SelectItem value="Atlantic/South_Georgia">South Georgia (UTC-2)</SelectItem>
+                                <SelectItem value="Atlantic/Azores">Azores (UTC-1)</SelectItem>
+                                <SelectItem value="UTC">London (UTC+0)</SelectItem>
+                                <SelectItem value="Europe/Paris">Paris (UTC+1)</SelectItem>
+                                <SelectItem value="Africa/Cairo">Cairo (UTC+2)</SelectItem>
+                                <SelectItem value="Europe/Moscow">Moscow (UTC+3)</SelectItem>
+                                <SelectItem value="Asia/Dubai">Dubai (UTC+4)</SelectItem>
+                                <SelectItem value="Asia/Kabul">Kabul (UTC+4:30)</SelectItem>
+                                <SelectItem value="Asia/Karachi">Karachi (UTC+5)</SelectItem>
+                                <SelectItem value="Asia/Kolkata">Mumbai (UTC+5:30)</SelectItem>
+                                <SelectItem value="Asia/Kathmandu">Kathmandu (UTC+5:45)</SelectItem>
+                                <SelectItem value="Asia/Dhaka">Dhaka (UTC+6)</SelectItem>
+                                <SelectItem value="Asia/Yangon">Yangon (UTC+6:30)</SelectItem>
+                                <SelectItem value="Asia/Bangkok">Bangkok (UTC+7)</SelectItem>
+                                <SelectItem value="Asia/Shanghai">Shanghai (UTC+8)</SelectItem>
+                                <SelectItem value="Asia/Tokyo">Tokyo (UTC+9)</SelectItem>
+                                <SelectItem value="Australia/Adelaide">Adelaide (UTC+9:30)</SelectItem>
+                                <SelectItem value="Australia/Sydney">Sydney (UTC+10)</SelectItem>
+                                <SelectItem value="Pacific/Noumea">Noumea (UTC+11)</SelectItem>
+                                <SelectItem value="Pacific/Auckland">Auckland (UTC+12)</SelectItem>
+                                <SelectItem value="Pacific/Tongatapu">Nuku'alofa (UTC+13)</SelectItem>
+                                <SelectItem value="Pacific/Kiritimati">Kiritimati (UTC+14)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label htmlFor={`unlimited-height-${widget.id}`} className="text-sm font-normal text-white cursor-pointer">
+                                Unlimited Height
+                              </Label>
+                              <p className="text-xs text-white/60 mt-1">
+                                Show all habits without scrolling
+                              </p>
+                            </div>
+                            <Switch
+                              id={`unlimited-height-${widget.id}`}
+                              checked={(widget as HabitTrackerWidgetConfig).settings.unlimitedHeight || false}
+                              onCheckedChange={(checked) => {
+                                setPrefs((p) => ({
+                                  ...p,
+                                  widgets: updateWidgetSettings(p.widgets, widget.id, {
+                                    unlimitedHeight: checked,
+                                  }),
+                                }))
+                              }}
+                            />
                           </div>
                         </div>
                       )}

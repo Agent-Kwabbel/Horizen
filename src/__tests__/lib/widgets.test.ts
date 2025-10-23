@@ -29,6 +29,7 @@ describe('widgets utility functions', () => {
         icon: 'cloud',
         defaultSettings: {
           unitSystem: 'metric',
+          forecastDisplay: 'expanded',
           alertLevel: 'all',
           alertTypes: {
             wind: true,
@@ -88,6 +89,7 @@ describe('widgets utility functions', () => {
         order: 0,
         settings: {
           unitSystem: 'metric',
+          forecastDisplay: 'expanded',
           alertLevel: 'all',
           alertTypes: {
             wind: true,
@@ -138,6 +140,7 @@ describe('widgets utility functions', () => {
         order: 0,
         settings: {
           unitSystem: 'metric',
+          forecastDisplay: 'expanded',
           alertLevel: 'all',
           alertTypes: {
             wind: true,

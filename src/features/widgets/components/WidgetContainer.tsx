@@ -6,6 +6,7 @@ import NotesWidget from "./NotesWidget"
 import QuoteWidget from "./QuoteWidget"
 import TickerWidget from "./TickerWidget"
 import PomodoroWidget from "./PomodoroWidget"
+import HabitTrackerWidget from "./HabitTrackerWidget"
 
 type WidgetRendererProps = {
   widget: WidgetConfig
@@ -23,6 +24,8 @@ function WidgetRenderer({ widget }: WidgetRendererProps) {
       return <TickerWidget config={widget} />
     case "pomodoro":
       return <PomodoroWidget config={widget} />
+    case "habitTracker":
+      return <HabitTrackerWidget config={widget} />
     default:
       return null
   }
